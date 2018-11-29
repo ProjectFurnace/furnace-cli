@@ -1,0 +1,29 @@
+{
+  "name": "@project-furnace/furnace-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ProjectFurnace/furnace-cli.git"
+  },
+  "author": "Danny Waite <danny.waite@***REMOVED***>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ProjectFurnace/furnace-cli/issues"
+  },
+  "homepage": "https://github.com/ProjectFurnace/furnace-cli#readme",
+  "devDependencies": {
+    "jest": "^23.6.0"
+  },
+  "dependencies": {
+    "commander": "^2.19.0"
+  },
+  "bin": {
+    "furnace": "index.js"
+  }
+}
