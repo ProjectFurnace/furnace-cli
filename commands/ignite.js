@@ -14,7 +14,7 @@ async function ingiteAws(name, platform, region) {
         , workspaceDir = workspace.getWorkspaceDir()
         , bootstrapDir = path.join(workspaceDir, "bootstrap")
         , templateDir = path.join(bootstrapDir, platform)
-        , templateFile = path.join(templateDir, "template", "simple.template")//"furnaceIgnite.template")
+        , templateFile = path.join(templateDir, "template", "furnaceIgnite.template")//"simple.template")
         ;
 
     if (!fsutils.exists(bootstrapDir)) {
@@ -57,7 +57,10 @@ async function ingiteAws(name, platform, region) {
         }
         
         console.log("waiting for bootstrap template to finish...")
+        
+        // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
+        // const result = await cloudformation.waitFor('stackUpdateComplete', { StackName: name }).promise();
 
         let apiUrl;
 
