@@ -10,16 +10,18 @@ module.exports = async () => {
     if (!currentConfig.apiUrl) throw new Error(`unable to get current config`);
 
     const deployUrl = currentConfig.apiUrl + "/api/deploy";
-    console.log("deploy url is", deployUrl);
 
-    const currentPath = __dirname; //"/Users/danny/Dev/Projects/falanx/furnace/temp/furnace-test";
+    const currentPath = __dirname;
 
     git = require("simple-git/promise")(currentPath);
     let remoteUrl, commitRef;
 
     try {
-        remoteUrl = await git.listRemote(['--get-url']);
-        if (!remoteUrl) throw new Error("can't get remote url");
+        const remotesResponse = await git.listRemote(['--get-url']);
+        let remotes = []
+        if (remotesResponse) remotes = remotesResponse.split("\n");
+        if (remotes.length === 0) throw new Error("can't get remote url");
+        remoteUrl = remotes[0];
 
         const logs = await git.log();
         commitRef = logs.latest.hash;
@@ -35,5 +37,5 @@ module.exports = async () => {
         .post(deployUrl)
         .send({ remoteUrl, commitRef });
 
-    console.log(response.ok, response.body);
+    if (!response.ok) throw new Error(`unable to execute deployment: ${remote.body}`);
 }

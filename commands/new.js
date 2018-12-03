@@ -20,7 +20,7 @@ module.exports = async (template) => {
             throw new Error(`unable to find template ${name}, use 'furnace template add'`);
         }
     }
-    const currentDir = __dirname //"/Users/danny/Dev/Projects/falanx/furnace/temp/furnace-test";
+    const currentDir = __dirname;
     const currentDirectoryFiles = fsutils.listDirectory(currentDir);
     
     if (currentDirectoryFiles.length > 0) throw new Error(`furnace new must be done in an empty directory`);
