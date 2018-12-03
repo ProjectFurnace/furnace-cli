@@ -1,6 +1,7 @@
 const program = require("commander")
-    , ignite = require("./commands/ignite")
     , workspace = require("./utils/workspace")
+    , ignite = require("./commands/ignite")
+    , _new = require("./commands/new")
     ;
 
 workspace.initialize();
@@ -12,9 +13,9 @@ program
 });
 
 program
-  .command("new <template>")
-  .action((template, cmd) => {
-    console.log(template, cmd);
+  .command("new [template]")
+  .action(async (template, cmd) => {
+    await _new(template);
 });
 
 program.parse(process.argv);
