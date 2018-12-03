@@ -12,7 +12,7 @@ module.exports = async () => {
     const deployUrl = currentConfig.apiUrl + "/api/deploy";
     console.log("deploy url is", deployUrl);
 
-    const currentPath = "/Users/danny/Dev/Projects/falanx/furnace/temp/furnace-test";
+    const currentPath = __dirname; //"/Users/danny/Dev/Projects/falanx/furnace/temp/furnace-test";
 
     git = require("simple-git/promise")(currentPath);
     let remoteUrl, commitRef;

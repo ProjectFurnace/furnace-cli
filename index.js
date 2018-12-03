@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const program = require("commander")
     , workspace = require("./utils/workspace")
     , ignite = require("./commands/ignite")
