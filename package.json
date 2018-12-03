@@ -21,6 +21,9 @@
     "jest": "^23.6.0"
   },
   "dependencies": {
+    "@project-furnace/fsutils": "^0.1.4",
+    "@project-furnace/gitutils": "^0.1.1",
+    "aws-sdk": "^2.368.0",
     "commander": "^2.19.0"
   },
   "bin": {
