@@ -35,7 +35,13 @@ async function ingiteAws(name, platform, region) {
     const stackParams = {
         StackName: name,
         Capabilities: ["CAPABILITY_NAMED_IAM"],
-        TemplateBody: fsutils.readFile(templateFile)
+        TemplateBody: fsutils.readFile(templateFile),
+        Parameters: [
+            {
+              ParameterKey: 'ArtifactBucketName',
+              ParameterValue: bucket,
+            }
+          ]
     }
 
     try {
