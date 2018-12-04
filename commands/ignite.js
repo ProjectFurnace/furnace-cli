@@ -5,7 +5,7 @@ const gitutils = require("@project-furnace/gitutils")
     , AWS = require("aws-sdk")
     ;
 
-module.exports = async (name, platform, region) => {
+module.exports = async (name, platform, region, bucket) => {
     await ingiteAws(name, platform, region);
 }
 

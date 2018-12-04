@@ -46,3 +46,37 @@ module.exports.saveConfig = (config) => {
     const configFile = path.join(module.exports.getWorkspaceDir(), "config.json");
     fsutils.writeFile(configFile, JSON.stringify(config));
 }
+
+module.exports.getContext = async () => {
+    let remoteUrl, lastCommitRef, apiUrl;
+    const config = module.exports.getConfig();
+
+    const currentConfig = config[config.current];
+
+    if (!currentConfig.apiUrl) throw new Error(`unable to get current config`);
+    apiUrl = currentConfig.apiUrl;
+
+    const currentPath = process.cwd();
+
+    git = require("simple-git/promise")(currentPath);
+
+    try {
+        const remotesResponse = await git.listRemote(['--get-url']);
+        let remotes = []
+        if (remotesResponse) remotes = remotesResponse.split("\n");
+        if (remotes.length === 0) throw new Error("can't get remote url");
+        remoteUrl = remotes[0];
+
+        const logs = await git.log();
+        lastCommitRef = logs.latest.hash;
+        if (!lastCommitRef) throw new Error("unable to get last commit");
+
+    } catch (err) {
+        throw new Error(`unable to get commit info: ` + err);
+    }
+
+    return {
+        apiUrl, remoteUrl, lastCommitRef
+    }
+
+}

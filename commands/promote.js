@@ -4,7 +4,7 @@ const request = require("superagent")
     , ops = require("../utils/ops")
     ;
 
-module.exports = async () => {
+module.exports = async (environment) => {
     
     const context = await workspace.getContext()
         , deployUrl = context.apiUrl + "/api/deploy"
@@ -12,7 +12,7 @@ module.exports = async () => {
         ;
 
     if (!stackConfig.environments || stackConfig.environments.length === 0) throw new Error(`no environments specified in stack`);
-    const environment = stackConfig.environments[0];
+    if (!stackConfig.environments.includes(environment)) throw new Error(`environment ${environment} not found in stack, must be one of ${stackConfig.environments.join(", ")}`);
 
     ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment);
 

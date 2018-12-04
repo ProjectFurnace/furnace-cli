@@ -16,5 +16,20 @@ module.exports.addTemplate = async (name, url) => {
     else fsutils.mkdir(templateDir);
 
     await gitutils.clone(templateDir, url);
+}
 
+module.exports.listTemplates = () => {
+
+    const templates = fsutils.listDirectory(path.join(templatesDir));
+
+    for (let template of templates) {
+        console.log(template);
+    }
+}
+
+module.exports.removeTemplate = name => {
+    const templatePath = path.join(templatesDir, name);
+
+    if (fsutils.exists(templatePath)) fsutils.rimraf(templatePath);
+    else console.log("unable to find template");
 }

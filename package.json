@@ -25,7 +25,9 @@
     "@project-furnace/gitutils": "^0.1.3",
     "aws-sdk": "^2.368.0",
     "commander": "^2.19.0",
-    "superagent": "^4.0.0"
+    "inquirer": "^6.2.1",
+    "superagent": "^4.0.0",
+    "yamljs": "^0.3.0"
   },
   "bin": {
     "furnace": "index.js"
