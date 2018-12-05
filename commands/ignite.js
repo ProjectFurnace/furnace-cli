@@ -38,7 +38,7 @@ async function ingiteAws(answers) {
         , workspaceDir = workspace.getWorkspaceDir()
         , bootstrapDir = path.join(workspaceDir, "bootstrap")
         , templateDir = path.join(bootstrapDir, platform)
-        , templateFile = path.join(templateDir, "template", "simple.template") // "furnaceIgnite.template"
+        , templateFile = path.join(templateDir, "template", "furnaceIgnite.template") // "simple.template"
         ;
 
     let defaultRegion, defaultAccessKey, secret;
