@@ -7,6 +7,8 @@ const program = require("commander")
     , deploy = require("./commands/deploy")
     , promote = require("./commands/promote")
     , template = require("./commands/template")
+    , github = require("./commands/github")
+    , instance = require("./commands/instance")
     ;
 
 try
@@ -14,7 +16,7 @@ try
   workspace.initialize();
 
   program
-    .command("ignite <name> <platform> <region>")
+    .command("ignite")
     .action(async (name, platform, region) => {
       await ignite(name, platform, region);
   });
@@ -39,10 +41,20 @@ try
 
   program
     .command("template [rm] [name]")
-
     .action(async (subCommand, name) => {
       await template(subCommand, name);
-      
+  });
+
+  program
+    .command("github-hook-create-repo [secret] [token]")
+    .action(async (secret, token) => {
+      await github.createHook(secret, token);
+  });
+
+  program
+    .command("instance-list")
+    .action(async () => {
+      instance.list();
   });
 
   program.parse(process.argv);
