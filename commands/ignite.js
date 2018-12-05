@@ -32,7 +32,7 @@ module.exports = async () => {
 
 async function ingiteAws(answers) {
 
-    const { name, platform, region, bucket, gitToken, gitProvider, storeGitHubToken } = answers;
+    const { name, platform, bucket, gitToken, gitProvider, storeGitHubToken } = answers;
 
     const bootstrapRemote = `https://github.com/ProjectFurnace/bootstrap`
         , workspaceDir = workspace.getWorkspaceDir()
@@ -62,6 +62,7 @@ async function ingiteAws(answers) {
     ]
 
     const awsAnswers = await inquirer.prompt(awsQuestions);
+    const { region } = awsAnswers;
 
     if (!secret) secret = awsAnswers.secret;
 
@@ -107,11 +108,13 @@ async function ingiteAws(answers) {
             },
           ]
     }
-    console.log(stackParams);
-    return;
+
     try {
 
-        let stackExists = false;
+        let stackExists = false
+          , apiUrl
+          ;
+
         const stackList = await cloudformation.listStacks().promise();
         
         for (let stack of stackList.StackSummaries) {
@@ -132,8 +135,6 @@ async function ingiteAws(answers) {
         // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
         // const result = await cloudformation.waitFor('stackUpdateComplete', { StackName: name }).promise();
-
-        let apiUrl;
 
         for (let stack of result.Stacks) {
             for (let output of stack.Outputs) {
