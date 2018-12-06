@@ -80,3 +80,9 @@ module.exports.getContext = async () => {
     }
 
 }
+
+module.exports.getCurrentConfig = () => {
+    const config = module.exports.getConfig();
+
+    return config[config.current];
+}

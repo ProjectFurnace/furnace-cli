@@ -1,4 +1,9 @@
-const octokit = require("@octokit/rest")();
+// const octokit = require("@octokit/rest")();
+const octokit = require('@octokit/rest')({
+    headers: {
+      accept: 'application/vnd.github.machine-man-preview',
+    }
+});
 
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     if (token) auth(token);
@@ -13,7 +18,7 @@ module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     const { owner, repo } = getOwnerRepoFromUrl(repoUrl);
 
     const name = "web"
-        , events = ["push"]
+        , events = ["push", "deployment"]
         , active = true
         ;
 
@@ -50,6 +55,35 @@ module.exports.createRepository = async (token, url, prvt) => {
     return result;
 }
 
+module.exports.listDeployments = async (token, url, environment) => {
+    if (token) auth(token);
+
+    const { owner, repo } = getOwnerRepoFromUrl(url);
+    const per_page = 10;
+
+    const result = await octokit.repos.listDeployments({ owner, repo, per_page, environment });
+    return result.data;
+}
+
+module.exports.getDeploymentStatus = async (token, url, deployment_id, status_id) => {
+    if (token) auth(token);
+
+    const { owner, repo } = getOwnerRepoFromUrl(url);
+
+    const result = await octokit.repos.getDeploymentStatus({ owner, repo, deployment_id, status_id });
+    return result.data;
+}
+
+module.exports.listDeploymentStatuses = async (token, url, deployment_id) => {
+    if (token) auth(token);
+
+    const { owner, repo } = getOwnerRepoFromUrl(url);
+    const state_id = 0
+
+    const result = await octokit.repos.listDeploymentStatuses({ owner, repo, deployment_id, state_id })
+    return result.data;
+}
+
 getOwnerRepoFromUrl = (url) => {
     const repoParts = url.split("/");
     const repo = repoParts.pop().replace(".git", "");
@@ -60,4 +94,5 @@ getOwnerRepoFromUrl = (url) => {
 
 auth = token => {
     octokit.authenticate({ type: 'token', token });
+    
 }

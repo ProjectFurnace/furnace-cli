@@ -9,6 +9,7 @@ const program = require("commander")
     , template = require("./commands/template")
     , github = require("./commands/github")
     , instance = require("./commands/instance")
+    , status = require("./commands/status")
     ;
 
 try
@@ -46,15 +47,21 @@ try
   });
 
   program
-    .command("github-hook-create-repo [secret] [token]")
-    .action(async (secret, token) => {
-      await github.createHook(secret, token);
+    .command("github-hook-create-repo [token] [secret]")
+    .action(async (token, secret) => {
+      await github.createHook(token, secret);
   });
 
   program
     .command("instance-list")
     .action(async () => {
       instance.list();
+  });
+
+  program
+    .command("status")
+    .action(async () => {
+      await status();
   });
 
   program.parse(process.argv);
