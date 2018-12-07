@@ -14,6 +14,7 @@ module.exports = async () => {
         { type: 'list', name: 'platform', message: "Platform:", choices: ["aws"] },
         { type: 'input', name: 'bucket', message: "Artifact Bucket:", default: "" },
         { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "" },
+	{ type: 'password', name: 'npmToken', message: "NPM Access Token:", default: ""},
         { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github", "git"] },
         { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token", when: current => current.gitProvider === "github" }
     ];
@@ -32,7 +33,7 @@ module.exports = async () => {
 
 async function ingiteAws(answers) {
 
-    const { name, platform, bucket, gitToken, gitProvider, storeGitHubToken } = answers;
+    const { name, platform, bucket, gitToken, npmToken, gitProvider, storeGitHubToken } = answers;
 
     const bootstrapRemote = `https://github.com/ProjectFurnace/bootstrap`
         , workspaceDir = workspace.getWorkspaceDir()
@@ -66,9 +67,11 @@ async function ingiteAws(answers) {
 
     if (!secret) secret = awsAnswers.secret;
 
-    if (!fsutils.exists(bootstrapDir)) {
+    if (!fsutils.exists(bootstrapDir + '/.git')) {
         console.debug(`cloning ${bootstrapRemote} to ${bootstrapDir}...`)
-        fsutils.mkdir(bootstrapDir);
+        if (!fsutils.exists(bootstrapDir)) {
+            fsutils.mkdir(bootstrapDir);
+        }
         await gitutils.clone(bootstrapDir, bootstrapRemote, "", "");
     } else {
         console.debug(`pulling latest bootstrap templates...`);
@@ -99,11 +102,15 @@ async function ingiteAws(answers) {
                 ParameterValue: gitToken,
             },
             {
-                ParameterKey: 'AWS_ACCESS_KEY_ID',
+                ParameterKey: 'NpmToken',
+                ParameterValue: npmToken,
+            },
+            {
+                ParameterKey: 'AwsKey',
                 ParameterValue: awsAnswers.accessKey,
             },
             {
-                ParameterKey: 'AWS_SECRET_ACCESS_KEY',
+                ParameterKey: 'AwsSecret',
                 ParameterValue: secret,
             },
           ]
