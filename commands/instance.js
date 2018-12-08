@@ -1,4 +1,6 @@
-const workspace = require("../utils/workspace");
+const workspace = require("../utils/workspace")
+    , chalk = require("chalk")
+    ;
 
 module.exports.list = () => {
     const config = workspace.getConfig();
@@ -6,7 +8,7 @@ module.exports.list = () => {
     for (let item in config) {
         if (item !== "current") {
             const instance = config[item];
-            console.log(`${item} ${instance.platform} ${instance.region} ${instance.apiUrl}`);
+            console.log(`name: ${chalk.green(item)} platform ${chalk.green(instance.platform)} region ${chalk.green(instance.region)} url: ${chalk.green(instance.apiUrl)}`);
         }
     }
 }

@@ -5,7 +5,7 @@ const workspace = require("../utils/workspace")
     , templateUtil = require("../utils/template")
     , inquirer = require("inquirer")
     , yaml = require("yamljs")
-    , github = require("../utils/github")
+    , githubUtil = require("../utils/github")
     ;
 
 module.exports = async (directory) => {
@@ -20,20 +20,32 @@ module.exports = async (directory) => {
     
     if (currentDirectoryFiles.length > 0) throw new Error(`furnace new must be done in an empty directory`);
 
-    const defaultStackName = path.basename(process.cwd());
+    const defaultStackName = path.basename(currentDir)
+        , isGitHub = currentConfig.gitProvider
+        , gitHubOrgs = isGitHub ? await githubUtil.getOrgs(currentConfig.gitToken) : []
+        ;
+
     const questions = [
         { type: 'input', name: 'template', message: "Template:", default: "starter-template" },
-        { type: 'input', name: 'remoteUrl', message: "Stack Remote Git URL:", default: "" },
-        { type: 'input', name: 'stateRemoteUrl', message: "State Remote Git URL:", default: getStateRemoteGitUrl },
+        { type: 'input', name: 'remoteUrl', message: "Stack Remote Git URL:", default: "", when: !isGitHub },
+        { type: 'input', name: 'stateRemoteUrl', message: "State Remote Git URL:", default: getStateRemoteGitUrl, when: !isGitHub },
         { type: 'input', name: 'stackName', message: "Stack Name:", default: defaultStackName },
-        { type: 'confirm', name: 'createRepos', message: "Create GitHub Repositories?", when: currentConfig.gitProvider === "github" && currentConfig.gitToken },
+        { type: 'list', name: 'org', message: "GitHub Org:", choices: gitHubOrgs, when: isGitHub },
+        { type: 'input', name: 'repo', message: "GitHub Repository:", default: defaultStackName, when: isGitHub },
+        { type: 'input', name: 'stateRepo', message: "Repository:", default: current => current.repo + "-state" },
+        { type: 'confirm', name: 'createRepos', message: "Create GitHub Repositories?", when: isGitHub && currentConfig.gitToken },
         { type: 'confirm', name: 'privateRepo', message: "Private Repository?", when: current => current.createRepos },
-        { type: 'confirm', name: 'createHook', message: "Create GitHub Webhook", when: () => currentConfig.gitProvider === "github" && currentConfig.gitToken },
+        { type: 'confirm', name: 'createHook', message: "Create GitHub Webhook", when: () => isGitHub && currentConfig.gitToken },
         { type: 'password', name: 'hookSecret', message: "Webhook Secret:", when: current => current.createHook },
     ];
 
     const answers = await inquirer.prompt(questions);
-    const { template, remoteUrl, stateRemoteUrl, stackName, createRepos, privateRepo, createHook, hookSecret } = answers;
+    let { template, remoteUrl, stateRemoteUrl, stackName, createRepos, privateRepo, createHook, hookSecret, org, repo, stateRepo } = answers;
+
+    if (isGitHub) {
+        remoteUrl = `https://github.com/${org}/${repo}`;
+        stateRemoteUrl = `https://github.com/${org}/${stateRepo}`;
+    }
 
     const workspaceDir = workspace.getWorkspaceDir()
         , templateDir = path.join(workspaceDir, "templates", template)
@@ -67,16 +79,16 @@ module.exports = async (directory) => {
     await git.addRemote("origin", remoteUrl);
 
     if (createRepos) {
-        const currentRepo = await github.getRepository(currentConfig.gitToken, remoteUrl);
+        const currentRepo = await githubUtil.getRepository(currentConfig.gitToken, remoteUrl);
         if (currentRepo) console.log(`repository ${remoteUrl} already exists.`);
         else {
-            await github.createRepository(currentConfig.gitToken, remoteUrl, privateRepo);
+            await githubUtil.createRepository(currentConfig.gitToken, remoteUrl, privateRepo);
         }
 
-        const currentStateRepo = await github.getRepository(currentConfig.gitToken, stateRemoteUrl);
+        const currentStateRepo = await githubUtil.getRepository(currentConfig.gitToken, stateRemoteUrl);
         if (currentRepo) console.log(`repository ${stateRemoteUrl} already exists.`);
         else {
-            await github.createRepository(currentConfig.gitToken, stateRemoteUrl, privateRepo);
+            await githubUtil.createRepository(currentConfig.gitToken, stateRemoteUrl, privateRepo);
         }
 
         console.log(`created repositories`);
@@ -86,7 +98,7 @@ module.exports = async (directory) => {
     }
 
     if (createHook) {
-        github.createRepoHook(currentConfig.gitToken, remoteUrl, currentConfig.apiUrl + "/hook", hookSecret)
+        githubUtil.createRepoHook(currentConfig.gitToken, remoteUrl, currentConfig.apiUrl + "/hook", hookSecret)
         console.log(`created repository hook`)
     }
 

@@ -1,4 +1,3 @@
-// const octokit = require("@octokit/rest")();
 const octokit = require('@octokit/rest')({
     headers: {
       accept: 'application/vnd.github.machine-man-preview',
@@ -82,6 +81,13 @@ module.exports.listDeploymentStatuses = async (token, url, deployment_id) => {
 
     const result = await octokit.repos.listDeploymentStatuses({ owner, repo, deployment_id, state_id })
     return result.data;
+}
+
+module.exports.getOrgs = async (token) => {
+    if (token) auth(token);
+
+    const result = await octokit.orgs.listForAuthenticatedUser();
+    return result.data.map(item => item.login);
 }
 
 getOwnerRepoFromUrl = (url) => {

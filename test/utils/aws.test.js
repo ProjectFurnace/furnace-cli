@@ -12,7 +12,7 @@ describe('aws', () => {
         expect(credentials.aws_secret_access_key).toBeDefined();
     });
 
-    it.only('should return profiles', () => {
+    it('should return profiles', () => {
         const profiles = aws.getProfiles();
         console.log(profiles);
     });

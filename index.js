@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 const program = require("commander")
-    , workspace = require("./utils/workspace")
+    , w = require("./utils/workspace")
     , ignite = require("./commands/ignite")
     , _new = require("./commands/new")
     , deploy = require("./commands/deploy")
@@ -10,11 +10,12 @@ const program = require("commander")
     , github = require("./commands/github")
     , instance = require("./commands/instance")
     , status = require("./commands/status")
+    , context = require("./commands/context")
     ;
 
 try
 { 
-  workspace.initialize();
+  w.initialize();
 
   program
     .command("ignite")
@@ -62,6 +63,12 @@ try
     .command("status")
     .action(async () => {
       await status();
+  });
+
+  program
+    .command("context")
+    .action(async () => {
+      await context();
   });
 
   program.parse(process.argv);
