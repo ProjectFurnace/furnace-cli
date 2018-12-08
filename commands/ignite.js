@@ -90,13 +90,12 @@ async function ingiteAws(answers, resume, awsAnswers) {
     if (!region) throw new Error(`aws region must be defined`);
     
     AWS.config.region = region;
-
+    
     if (requireCredentials) {
-        AWS.config.credentials = {
-            accessKeyId,
-            secretAccessKey
-        }
-        console.log("require creds", AWS.config.credentials);
+        AWS.config.credentials.accessKeyId = accessKeyId;
+        AWS.config.credentials.secretAccessKey = secretAccessKey;
+        // process.env.AWS_ACCESS_KEY_ID = accessKeyId;
+        // process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
     } else if (profile !== "default") {
         AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
         console.log("setting ini", AWS.config.credentials);
