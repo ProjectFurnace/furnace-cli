@@ -83,10 +83,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
         awsAnswers = await inquirer.prompt(awsQuestions);
     }
-    if (requireCredentials && ( !accessKeyId || !secretAccessKey )) throw new Error(`AWS Access Key and Secret Access Key must be defined`);
     
     const { profile, region, accessKeyId, secretAccessKey } = awsAnswers;
 
+    if (requireCredentials && ( !accessKeyId || !secretAccessKey )) throw new Error(`AWS Access Key and Secret Access Key must be defined`);
     if (!region) throw new Error(`aws region must be defined`);
     
     AWS.config.region = region;
