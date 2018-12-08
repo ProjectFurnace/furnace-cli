@@ -8,10 +8,12 @@ const workspace = require("../utils/workspace")
     , github = require("../utils/github")
     ;
 
-module.exports = async () => {
+module.exports = async (directory) => {
 
-    const currentDir = process.cwd()
-        , currentDirectoryFiles = fsutils.listDirectory(currentDir)
+    const currentDir = directory ? path.join(process.cwd(), directory) : process.cwd();
+    if (!fsutils.exists(currentDir)) fsutils.mkdir(currentDir);
+    
+    const currentDirectoryFiles = fsutils.listDirectory(currentDir)
         , config = await workspace.getConfig()
         , currentConfig = config[config.current]
         ;

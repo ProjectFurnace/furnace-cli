@@ -34,3 +34,17 @@ module.exports.getCredentials = profile => {
     } else return null;
 
 }
+
+module.exports.getProfiles = () => {
+    let profiles = [];
+
+    try {
+        const config = module.exports.getConfig();
+        
+        for (let profile in config) {
+            profiles.push(profile.replace("profile ", ""));
+        }
+    } catch (err) {}
+
+    return profiles;
+}

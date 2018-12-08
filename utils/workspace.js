@@ -24,7 +24,7 @@ module.exports.initialize = () => {
         console.log(`furnace workspace does not exist, creating at ${workspaceDir}`);
     }
 
-    const directories = ["bootstrap", "templates"];
+    const directories = ["bootstrap", "templates", "temp"];
 
     for (let dir of directories) {
         const p = path.join(workspaceDir, dir);

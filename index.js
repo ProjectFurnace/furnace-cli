@@ -23,9 +23,9 @@ try
   });
 
   program
-    .command("new")
-    .action(async (cmd) => {
-      await _new();
+    .command("new [directory]")
+    .action(async (directory) => {
+      await _new(directory);
   });
 
   program
