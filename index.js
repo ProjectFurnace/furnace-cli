@@ -73,6 +73,18 @@ try
   });
 
   program
+    .command("instance-select [name]")
+    .action(async (name) => {
+      await instance.select(name);
+  });
+
+  program
+    .command("instance-remove [name]")
+    .action(async (name) => {
+      await instance.remove(name);
+  });
+
+  program
     .command("status")
     .action(async () => {
       await status();

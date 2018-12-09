@@ -39,3 +39,23 @@ module.exports.export = (name, file) => {
         [name]: def
     }));
 }
+
+module.exports.select = name => {
+    const config = workspace.getConfig();
+
+    const def = config[name];
+    if (!def) throw new Error(`can't find config by that name`);
+
+    config.current = name;
+    workspace.saveConfig(config);
+}
+
+module.exports.remove = name => {
+    const config = workspace.getConfig();
+
+    const def = config[name];
+    if (!def) throw new Error(`can't find config by that name`);
+
+    delete config[name];
+    workspace.saveConfig(config);
+}
