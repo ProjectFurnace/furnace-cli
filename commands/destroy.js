@@ -48,4 +48,19 @@ module.exports = async () => {
           }).promise()
     }
 
+    let mappingsToDelete = []
+    const mappingList = await lambda.listEventSourceMappings().promise();
+
+    for (let mapping of mappingList.EventSourceMappings) {
+        const fnName = mapping.FunctionArn.split(":").pop();
+        if (fnName.startsWith(stackName)) mappingsToDelete.push(mapping.UUID);
+    }
+
+    for (let mapping of mappingsToDelete) {
+        console.log(`deleting mapping ${mapping}`);
+        const deleteResult = await lambda.deleteEventSourceMapping({
+            UUID: mapping
+          }).promise()
+    }
+
 }
