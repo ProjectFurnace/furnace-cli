@@ -49,8 +49,3 @@ module.exports.getProfiles = () => {
 
     return profiles;
 }
-
-module.exports.listFunctions = async () => {
-    const result = await AWS.Lambda.listFunctions().promise();
-    return result;
-}
