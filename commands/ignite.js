@@ -40,7 +40,7 @@ module.exports = async () => {
             { type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
             { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "" },
             { type: 'password', name: 'npmToken', message: "NPM Access Token:", default: ""},
-            { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github", "git"] },
+            { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
             { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token", when: current => current.gitProvider === "github" }
         ];
     

@@ -29,10 +29,8 @@ module.exports = async () => {
     for (let fn of functionsToDelete) {
         console.log(`deleting function ${fn}`);
         const deleteResult = await lambda.deleteFunction({
-            FunctionName: "myFunction", 
-            Qualifier: "1"
+            FunctionName: fn
            }).promise()
-        console.log(deleteResult);
     }
 
     let streamsToDelete = []
@@ -48,7 +46,6 @@ module.exports = async () => {
             StreamName: stream,
             EnforceConsumerDeletion: true
           }).promise()
-        console.log(deleteResult);
     }
 
 }
