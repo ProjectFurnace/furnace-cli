@@ -1,5 +1,6 @@
 const workspace = require("../utils/workspace")
     , chalk = require("chalk")
+    , fsutils = require("@project-furnace/fsutils")
     ;
 
 module.exports.list = () => {
@@ -11,4 +12,30 @@ module.exports.list = () => {
             console.log(`name: ${chalk.green(item)} platform ${chalk.green(instance.platform)} region ${chalk.green(instance.region)} url: ${chalk.green(instance.apiUrl)}`);
         }
     }
+}
+
+module.exports.import = file => {
+    if (!fsutils.exists(file)) throw new Error(`unable to find specified file`);
+    const json = fsutils.readFile(file)
+        , imported = JSON.parse(json)
+        , config = workspace.getConfig()
+        ;
+
+    const keys = Object.keys(imported);
+    if (!keys.length === 1) throw new Error(`expecting 1 key in definition`)
+
+    Object.assign(config, imported);
+
+    workspace.saveConfig(config);
+}
+
+module.exports.export = (name, file) => {
+    const config = workspace.getConfig();
+
+    const def = config[name];
+    if (!def) throw new Error(`can't find config by that name`);
+
+    fsutils.writeFile(file, JSON.stringify({
+        [name]: def
+    }));
 }

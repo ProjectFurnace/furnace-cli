@@ -61,6 +61,18 @@ try
   });
 
   program
+    .command("instance-import [file]")
+    .action(async (file) => {
+      await instance.import(file);
+  });
+
+  program
+    .command("instance-export [name] [file]")
+    .action(async (name, file) => {
+      await instance.export(name, file);
+  });
+
+  program
     .command("status")
     .action(async () => {
       await status();
