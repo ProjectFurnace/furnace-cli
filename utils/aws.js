@@ -2,6 +2,7 @@ const fsutils = require("@project-furnace/fsutils")
     , os = require("os")
     , path = require("path")
     , ini = require("ini")
+    , AWS = require("aws-sdk")
     ;
 
 const awsDir = path.join(os.homedir(), ".aws");
@@ -47,4 +48,9 @@ module.exports.getProfiles = () => {
     } catch (err) {}
 
     return profiles;
+}
+
+module.exports.listFunctions = async () => {
+    const result = await AWS.Lambda.listFunctions().promise();
+    return result;
 }

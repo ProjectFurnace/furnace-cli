@@ -90,6 +90,10 @@ module.exports.getOrgs = async (token) => {
     return result.data.map(item => item.login);
 }
 
+module.exports.authenticateWithToken = token => {
+    auth(token);
+}
+
 getOwnerRepoFromUrl = (url) => {
     const repoParts = url.split("/");
     const repo = repoParts.pop().replace(".git", "");

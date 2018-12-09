@@ -11,6 +11,7 @@ const program = require("commander")
     , instance = require("./commands/instance")
     , status = require("./commands/status")
     , context = require("./commands/context")
+    , destroy = require("./commands/destroy")
     ;
 
 try
@@ -69,6 +70,12 @@ try
     .command("context")
     .action(async () => {
       await context();
+  });
+
+  program
+    .command("destroy")
+    .action(async () => {
+      await destroy();
   });
 
   program.parse(process.argv);

@@ -9,6 +9,7 @@ const gitutils = require("@project-furnace/gitutils")
     , ziputils = require("@project-furnace/ziputils")
     , s3utils = require("@project-furnace/s3utils")
     , chalk = require("chalk")
+    , github = require("../utils/github")
     ;
 
 module.exports = async () => {
@@ -72,6 +73,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
         , requireCredentials = !awsCli && profiles.length === 0
         ;
 
+    if (!awsCli) console.log(chalk.red("warning: no AWS CLI installed"))
+
     if (!resume) {
         
         const awsQuestions = [
@@ -88,6 +91,14 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     if (requireCredentials && ( !accessKeyId || !secretAccessKey )) throw new Error(`AWS Access Key and Secret Access Key must be defined`);
     if (!region) throw new Error(`aws region must be defined`);
+
+    if (gitProvider === "github") {
+        try {
+            github.authenticateWithToken(gitToken);
+        } catch (err) {
+            throw new Error(`unable to authenticate with GitHub with the provider token`)
+        }
+    }
     
     AWS.config.region = region;
     
@@ -134,10 +145,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
         Capabilities: ["CAPABILITY_NAMED_IAM"],
         TemplateBody: fsutils.readFile(templateFile),
         Parameters: [
-            {
-                ParameterKey: 'ArtifactBucketName',
-                ParameterValue: bucket,
-            },
+            // {
+            //     ParameterKey: 'ArtifactBucketName',
+            //     ParameterValue: bucket,
+            // },
             {
                 ParameterKey: 'BootstrapCodeBucketName',
                 ParameterValue: bucket,

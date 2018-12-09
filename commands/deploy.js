@@ -1,5 +1,4 @@
-const request = require("superagent")
-    , workspace = require("../utils/workspace")
+const workspace = require("../utils/workspace")
     , config = require("../utils/config")
     , ops = require("../utils/ops")
     ;
