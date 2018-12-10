@@ -103,8 +103,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
     
     AWS.config.region = region;
 
-    const codeBucket = name + '-' + region + '-furnace-bootstrap-' + randomstring.generate(6);
-    const artifactBucket = name + '-' + region + '-furnace-artifacts-' + randomstring.generate(6);
+    const codeBucket = name + '-' + region + '-furnace-bootstrap-' + randomstring.generate({length: 6, capitalization: 'lowercase'});
+    const artifactBucket = name + '-' + region + '-furnace-artifacts-' + randomstring.generate({length: 6, capitalization: 'lowercase'});
     const gitHookSecret = randomstring.generate(16);
     
     if (requireCredentials) {
