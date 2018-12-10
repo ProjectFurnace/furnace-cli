@@ -221,7 +221,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
         config[name] = {
             platform,
             region,
-            bucket,
+            artifactBucket,
+            codeBucket,
             gitToken: storeGitHubToken ? gitToken : null,
             gitHookSecret: gitHookSecret,
             apiUrl,
