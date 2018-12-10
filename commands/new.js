@@ -36,11 +36,11 @@ module.exports = async (directory) => {
         { type: 'confirm', name: 'createRepos', message: "Create GitHub Repositories?", when: isGitHub && currentConfig.gitToken },
         { type: 'confirm', name: 'privateRepo', message: "Private Repository?", when: current => current.createRepos },
         { type: 'confirm', name: 'createHook', message: "Create GitHub Webhook", when: () => isGitHub && currentConfig.gitToken },
-        { type: 'password', name: 'hookSecret', message: "Webhook Secret:", when: current => current.createHook },
+        //{ type: 'password', name: 'hookSecret', message: "Webhook Secret:", when: current => current.createHook },
     ];
 
     const answers = await inquirer.prompt(questions);
-    let { template, remoteUrl, stateRemoteUrl, stackName, createRepos, privateRepo, createHook, hookSecret, org, repo, stateRepo } = answers;
+    let { template, remoteUrl, stateRemoteUrl, stackName, createRepos, privateRepo, createHook, org, repo, stateRepo } = answers;
 
     if (isGitHub) {
         remoteUrl = `https://github.com/${org}/${repo}`;
@@ -98,7 +98,7 @@ module.exports = async (directory) => {
     }
 
     if (createHook) {
-        githubUtil.createRepoHook(currentConfig.gitToken, remoteUrl, currentConfig.apiUrl + "/hook", hookSecret)
+        githubUtil.createRepoHook(currentConfig.gitToken, remoteUrl, currentConfig.apiUrl + "/hook", currentConfig.gitHookSecret)
         console.log(`created repository hook`)
     }
 

@@ -10,6 +10,7 @@ const gitutils = require("@project-furnace/gitutils")
     , s3utils = require("@project-furnace/s3utils")
     , chalk = require("chalk")
     , github = require("../utils/github")
+    , randomstring = require("randomstring")
     ;
 
 module.exports = async () => {
@@ -37,7 +38,7 @@ module.exports = async () => {
         const questions = [
             { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace" },
             { type: 'list', name: 'platform', message: "Platform:", choices: ["aws"] },
-            { type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
+            //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
             { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "" },
             { type: 'password', name: 'npmToken', message: "NPM Access Token:", default: ""},
             { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
@@ -59,7 +60,7 @@ module.exports = async () => {
 
 async function ingiteAws(answers, resume, awsAnswers) {
 
-    const { name, platform, bucket, gitToken, npmToken, gitProvider, storeGitHubToken } = answers;
+    const { name, platform, gitToken, npmToken, gitProvider, storeGitHubToken } = answers;
 
     const bootstrapRemote = `https://github.com/ProjectFurnace/bootstrap`
         , workspaceDir = workspace.getWorkspaceDir()
@@ -101,6 +102,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
     }
     
     AWS.config.region = region;
+
+    const codeBucket = name + '-' + region + '-furnace-bootstrap-' + randomstring.generate(6);
+    const artifactBucket = name + '-' + region + '-furnace-artifacts-' + randomstring.generate(6);
+    const gitHookSecret = randomstring.generate(16);
     
     if (requireCredentials) {
         AWS.config.credentials.accessKeyId = accessKeyId;
@@ -125,15 +130,15 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     if (!fsutils.exists(templateDir)) throw new Error(`unable to find bootstrap template at ${templateDir}`);
 
-    const bucketExists = await s3utils.bucketExists(bucket);
+    const bucketExists = await s3utils.bucketExists(codeBucket);
     if (!bucketExists) {
         console.log("bucket does not exist, creating...");
-        await s3utils.createBucket(bucket, region);
+        await s3utils.createBucket(codeBucket, region);
     }
 
     // build bootstrap functions
     try {
-        await buildAndUploadFunctions(templateDir, bucket)
+        await buildAndUploadFunctions(templateDir, codeBucket)
     } catch (err) {
         throw new Error(`unable to build bootstrap functions: ${err}`)
     }
@@ -145,13 +150,13 @@ async function ingiteAws(answers, resume, awsAnswers) {
         Capabilities: ["CAPABILITY_NAMED_IAM"],
         TemplateBody: fsutils.readFile(templateFile),
         Parameters: [
-            // {
-            //     ParameterKey: 'ArtifactBucketName',
-            //     ParameterValue: bucket,
-            // },
+            {
+                 ParameterKey: 'ArtifactBucketName',
+                 ParameterValue: artifactBucket,
+            },
             {
                 ParameterKey: 'BootstrapCodeBucketName',
-                ParameterValue: bucket,
+                ParameterValue: codeBucket,
             },
             {
                 ParameterKey: 'GitUsername',
@@ -164,8 +169,11 @@ async function ingiteAws(answers, resume, awsAnswers) {
             {
                 ParameterKey: 'NpmToken',
                 ParameterValue: npmToken,
-            }
-            
+            },
+            {
+                 ParameterKey: 'GitHookSecret',
+                 ParameterValue: gitHookSecret,
+            },
           ]
     }
 
@@ -215,6 +223,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
             region,
             bucket,
             gitToken: storeGitHubToken ? gitToken : null,
+            gitHookSecret: gitHookSecret,
             apiUrl,
             gitProvider
         }
@@ -273,6 +282,19 @@ function getIgniteStatusPath() {
     return path.join(workspace.getWorkspaceDir(), "temp", `ignite-status.json`);
 }
 
+function execPromise(command, options) {
+    const exec = require("child_process").exec;
+
+    return new Promise((resolve, reject) => {
+        exec(command, options, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(stdout);
+        });
+    });
+}
+
 async function buildAndUploadFunctions(templateDir, bucket) {
     const functionsDir = path.join(templateDir, "functions")
         , functionsList = fsutils.listDirectory(functionsDir)
@@ -286,7 +308,12 @@ async function buildAndUploadFunctions(templateDir, bucket) {
             ;
         
         fsutils.cp(functionDir, functionBuildDir);
-        // TODO: add support for npm install
+        const execResult = await execPromise("npm install", { cwd: functionBuildDir, env: process.env });
+
+        if (execResult.stderr) {
+            throw new Error(`npm install returned an error:\n${execResult.stdout}\n${execResult.stderr}`);
+        }
+
         await ziputils.compress(functionBuildDir, zipPath);
         await s3utils.upload(bucket, fn, zipPath);
     }
