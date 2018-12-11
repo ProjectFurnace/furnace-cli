@@ -309,7 +309,7 @@ async function buildAndUploadFunctions(templateDir, bucket) {
             ;
         
         fsutils.cp(functionDir, functionBuildDir);
-        const execResult = await execPromise("npm install", { cwd: functionBuildDir, env: process.env });
+        const execResult = await execPromise("npm install --production", { cwd: functionBuildDir, env: process.env });
 
         if (execResult.stderr) {
             throw new Error(`npm install returned an error:\n${execResult.stdout}\n${execResult.stderr}`);
