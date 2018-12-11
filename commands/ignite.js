@@ -290,6 +290,7 @@ function execPromise(command, options) {
         exec(command, options, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
+                return;
             }
             resolve(stdout);
         });
