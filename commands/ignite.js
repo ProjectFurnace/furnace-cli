@@ -112,9 +112,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
         AWS.config.credentials.secretAccessKey = secretAccessKey;
         // process.env.AWS_ACCESS_KEY_ID = accessKeyId;
         // process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
+        s3utils.setCredentials(AWS.config.credentials);
     } else if (profile !== "default") {
         AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
-        console.log("setting ini", AWS.config.credentials);
+        s3utils.setCredentials(AWS.config.credentials);
     }
 
     if (!fsutils.exists(bootstrapDir + '/.git')) {
@@ -132,7 +133,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     const bucketExists = await s3utils.bucketExists(codeBucket);
     if (!bucketExists) {
-        console.log("bucket does not exist, creating...");
+        console.log("creating bootstrap bucket...");
         await s3utils.createBucket(codeBucket, region);
     }
 
@@ -185,7 +186,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
         const stackList = await cloudformation.listStacks().promise();
         
         for (let stack of stackList.StackSummaries) {
-            if (stack.StackName === name) {
+            // we need to check both the name and the status
+            if (stack.StackName === name && stack.StackStatus !== 'DELETE_COMPLETE') {
                 stackExists = true;
                 break;
             }
@@ -203,7 +205,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
             const createStackResponse = await cloudformation.createStack(stackParams).promise();
         }
         
-        console.log("waiting for bootstrap template to finish...")
+        console.log("waiting for bootstrap template to finish. this may take a few minutes...")
         
         // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
@@ -239,7 +241,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
             awsAnswers
         })
 
-        console.log(`furnace instance now complete.\nto create a new stack:\n`);
+        console.log(`furnace instance now complete.\nto create a new stack, please run:`);
         console.log(chalk.green(`furnace new [stack_name]`));
 
     } catch (err) {
