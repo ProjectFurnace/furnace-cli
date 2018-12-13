@@ -3,7 +3,7 @@ const request = require("superagent")
     , config = require("../utils/config")
     ;
 
-module.exports.deploy = async (deployUrl, remoteUrl, commitRef, environment) => {
+module.exports.deploy = async (deployUrl, remoteUrl, commitRef, environment, apikey) => {
   
     console.log(`deploying commit ${commitRef} on remote ${remoteUrl} to environment ${environment}`);
 
@@ -13,7 +13,7 @@ module.exports.deploy = async (deployUrl, remoteUrl, commitRef, environment) => 
             remoteUrl,
             commitRef,
             environment
-        });
+        }).set('X-API-Key', apikey);
 
     if (!response.ok) throw new Error(`unable to execute deployment: [${remote.body}]`);
 }

@@ -36,7 +36,7 @@ module.exports = async () => {
 
     if (!resume) {
         const questions = [
-            { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace" },
+            { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace", validate: validateInstanceName },
             { type: 'list', name: 'platform', message: "Platform:", choices: ["aws"] },
             //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
             { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "" },
@@ -106,6 +106,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
     const codeBucket = name + '-' + region + '-furnace-bootstrap-' + randomstring.generate({length: 6, capitalization: 'lowercase'});
     const artifactBucket = name + '-' + region + '-furnace-artifacts-' + randomstring.generate({length: 6, capitalization: 'lowercase'});
     const gitHookSecret = randomstring.generate(16);
+    const apiKey = randomstring.generate(16);
     
     if (requireCredentials) {
         AWS.config.credentials.accessKeyId = accessKeyId;
@@ -175,6 +176,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
                  ParameterKey: 'GitHookSecret',
                  ParameterValue: gitHookSecret,
             },
+            {
+                 ParameterKey: 'ApiKey',
+                 ParameterValue: apiKey,
+            },
           ]
     }
 
@@ -228,6 +233,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
             gitToken: storeGitHubToken ? gitToken : null,
             gitHookSecret: gitHookSecret,
             apiUrl,
+            apiKey,
             gitProvider
         }
 
@@ -247,6 +253,13 @@ async function ingiteAws(answers, resume, awsAnswers) {
     } catch (err) {
         throw new Error(`unable to ignite furnace: ${err}`)
     }
+}
+
+function validateInstanceName(value){
+    if (value.match(/^([A-Za-z][A-Za-z0-9-_]{1,6}[A-Za-z0-9])$/i)) {
+        return true;
+    }
+    return 'Please enter a valid instance name. Maximum 8 chars [A-Za-z0-9-_] starting with a letter and ending with a letter or number';
 }
 
 function getDefaultRegion(profile) {

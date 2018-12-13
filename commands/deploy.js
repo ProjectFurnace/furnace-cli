@@ -13,6 +13,6 @@ module.exports = async () => {
     if (!stackConfig.environments || stackConfig.environments.length === 0) throw new Error(`no environments specified in stack`);
     const environment = stackConfig.environments[0];
 
-    ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment);
+    ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment, context.apiKey);
 
 }

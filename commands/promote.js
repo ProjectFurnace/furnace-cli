@@ -14,6 +14,6 @@ module.exports = async (environment) => {
     if (!stackConfig.environments || stackConfig.environments.length === 0) throw new Error(`no environments specified in stack`);
     if (!stackConfig.environments.includes(environment)) throw new Error(`environment ${environment} not found in stack, must be one of ${stackConfig.environments.join(", ")}`);
 
-    ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment);
+    ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment, context.apiKey);
 
 }
