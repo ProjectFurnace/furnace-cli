@@ -210,7 +210,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
             const createStackResponse = await cloudformation.createStack(stackParams).promise();
         }
         
-        console.log("waiting for bootstrap template to finish. this may take a few minutes...")
+        console.log("waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea...")
         
         // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
@@ -234,7 +234,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
             gitHookSecret: gitHookSecret,
             apiUrl,
             apiKey,
-            gitProvider
+            gitProvider,
+            awsProfile: profile ? profile : null,
         }
 
         config.current = name;

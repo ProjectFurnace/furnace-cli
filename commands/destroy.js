@@ -7,11 +7,15 @@ module.exports = async () => {
     const stack = config.getConfig("stack")
         , stackName = stack.name
         , currentConfig = workspace.getCurrentConfig()
+        , profile = currentConfig.awsProfile
         , region = currentConfig.region
         ;
 
+    if (profile) {
+        AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
+    }
+
     AWS.config.region = region;
-    //TODO: ensure we're using correct AWS profile
 
     console.log(`current stack is ${stackName}`);
 
