@@ -21,6 +21,7 @@ module.exports = async () => {
 
     const lambda = new AWS.Lambda()
         , kinesis = new AWS.Kinesis()
+        , elastic = new AWS.ES()
         ;
 
     let functionsToDelete = [];
@@ -65,6 +66,20 @@ module.exports = async () => {
         const deleteResult = await lambda.deleteEventSourceMapping({
             UUID: mapping
           }).promise()
+    }
+
+    let elasticsToDelete = [];
+    const elasticList = await elastic.listDomainNames().promise();
+
+    for (let domain of elasticList.DomainNames) {
+        if (domain.DomainName.startsWith(stackName)) elasticsToDelete.push(domain.DomainName);
+    }
+
+    for (let domain of elasticsToDelete) {
+        console.log(`deleting elasticsearch ${domain}`);
+        const deleteResult = await elastic.deleteElasticsearchDomain({
+            DomainName: domain
+           }).promise()
     }
 
 }
