@@ -43,13 +43,24 @@ module.exports.getRepository = async (token, url) => {
 
 }
 
-module.exports.createRepository = async (token, url, prvt) => {
+module.exports.createRepositoryInOrg = async (token, url, prvt) => {
     if (token) auth(token);
 
     const { owner, repo } = getOwnerRepoFromUrl(url);
     const obj = { org: owner, name: repo, private: prvt };
 
     const result = await octokit.repos.createInOrg(obj);
+
+    return result;
+}
+
+module.exports.createRepositoryForUser = async (token, url, prvt) => {
+    if (token) auth(token);
+
+    const { owner, repo } = getOwnerRepoFromUrl(url);
+    const obj = { name: repo, private: prvt };
+
+    const result = await octokit.repos.createForAuthenticatedUser(obj);
 
     return result;
 }
@@ -88,6 +99,13 @@ module.exports.getOrgs = async (token) => {
 
     const result = await octokit.orgs.listForAuthenticatedUser();
     return result.data.map(item => item.login);
+}
+
+module.exports.getAuthenticatedUser = async (token) => {
+    if (token) auth(token);
+
+    const result = await octokit.users.getAuthenticated({})
+    return result.data;
 }
 
 module.exports.authenticateWithToken = token => {

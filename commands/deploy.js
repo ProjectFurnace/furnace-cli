@@ -1,19 +1,13 @@
-const workspace = require("../utils/workspace")
-    , config = require("../utils/config")
-    , ops = require("../utils/ops")
-    ;
+const program = require("commander")
+    , cmd = require("../actions/deploy")
 
-module.exports = async () => {
-    
-    const context = await workspace.getContext()
-        , currentConfig = workspace.getCurrentConfig()
-        , deployUrl = context.apiUrl + "/api/deploy"
-        , stackConfig = config.getConfig("stack")
-        ;
+module.exports = (args) => {
+    program
+    .command("deploy")
+    .action(async () => {
+        await cmd();
+    });
 
-    if (!stackConfig.environments || stackConfig.environments.length === 0) throw new Error(`no environments specified in stack`);
-    const environment = stackConfig.environments[0];
-
-    ops.deploy(deployUrl, context.remoteUrl, context.lastCommitRef, environment, currentConfig.apiKey);
+    program.parse(args);
 
 }

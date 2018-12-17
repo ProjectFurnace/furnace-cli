@@ -1,5 +1,5 @@
 const program = require("commander")
-    , cmd = require("../actions/template")
+    , cmd = require("../actions/repo")
 
 module.exports = (args) => {
     program

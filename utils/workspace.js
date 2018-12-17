@@ -3,8 +3,6 @@ const os = require("os")
     , fsutils = require("@project-furnace/fsutils")
     ;
 
-
-
 module.exports.getWorkspaceDir = () => {
     const homedir = os.homedir()
     , workspaceDir = path.join(homedir, ".furnace")
@@ -24,7 +22,7 @@ module.exports.initialize = () => {
         console.log(`furnace workspace does not exist, creating at ${workspaceDir}`);
     }
 
-    const directories = ["bootstrap", "templates", "temp"];
+    const directories = ["bootstrap", "templates", "temp", "repo"];
 
     for (let dir of directories) {
         const p = path.join(workspaceDir, dir);
@@ -47,15 +45,17 @@ module.exports.saveConfig = (config) => {
     fsutils.writeFile(configFile, JSON.stringify(config));
 }
 
-module.exports.getContext = async () => {
-    let remoteUrl, lastCommitRef, apiUrl;
+module.exports.getCurrentContext = () => {
     const config = module.exports.getConfig();
 
-    const currentConfig = config[config.current];
+    let context = config[config.current];
+    context.name = config.current;
 
-    if (!currentConfig.apiUrl) throw new Error(`unable to get current config`);
-    apiUrl = currentConfig.apiUrl;
+    return config[config.current];
+}
 
+module.exports.getRemoteUrl = async () => {
+    
     const currentPath = process.cwd();
 
     git = require("simple-git/promise")(currentPath);
@@ -75,14 +75,6 @@ module.exports.getContext = async () => {
         throw new Error(`unable to get commit info: ` + err);
     }
 
-    return {
-        apiUrl, remoteUrl, lastCommitRef
-    }
+    return remoteUrl;
 
-}
-
-module.exports.getCurrentConfig = () => {
-    const config = module.exports.getConfig();
-
-    return config[config.current];
 }

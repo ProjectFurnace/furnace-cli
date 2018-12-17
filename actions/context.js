@@ -33,7 +33,7 @@ module.exports.export = (name, file) => {
     const config = workspace.getConfig();
 
     const def = config[name];
-    if (!def) throw new Error(`can't find config by that name`);
+    if (!def) throw new Error(`can't find context by that name`);
 
     fsutils.writeFile(file, JSON.stringify({
         [name]: def
@@ -44,7 +44,7 @@ module.exports.select = name => {
     const config = workspace.getConfig();
 
     const def = config[name];
-    if (!def) throw new Error(`can't find config by that name`);
+    if (!def) throw new Error(`can't find context by that name`);
 
     config.current = name;
     workspace.saveConfig(config);
@@ -54,8 +54,22 @@ module.exports.remove = name => {
     const config = workspace.getConfig();
 
     const def = config[name];
-    if (!def) throw new Error(`can't find config by that name`);
+    if (!def) throw new Error(`can't find context by that name`);
 
     delete config[name];
     workspace.saveConfig(config);
+}
+
+module.exports.status = () => {
+
+    const context = workspace.getCurrentContext();
+
+    const { name, platform, region, gitProvider, apiUrl } = context;
+
+    console.log(`Current Context: ${chalk.green(name)}`);
+    console.log(`Platform: ${chalk.green(platform)}`);
+    console.log(`Region: ${chalk.green(region)}`);
+    console.log(`Git Provider: ${chalk.green(gitProvider)}`);
+    console.log(`API URL: ${chalk.green(apiUrl)}`)
+    
 }

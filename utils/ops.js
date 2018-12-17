@@ -1,6 +1,6 @@
 const request = require("superagent")
     , workspace = require("../utils/workspace")
-    , config = require("../utils/config")
+    , config = require("./stack")
     ;
 
 module.exports.deploy = async (deployUrl, remoteUrl, commitRef, environment, apikey) => {
