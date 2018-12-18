@@ -9,5 +9,11 @@ module.exports = (args) => {
         await cmd.import(location);
     });
 
+    program
+    .command("new [name] [template]")
+    .action(async (name, template) => {
+        await cmd.new(name, template);
+    });
+
     program.parse(args);
 }

@@ -49,12 +49,12 @@ module.exports = async (directory) => {
     }
 
     const workspaceDir = workspace.getWorkspaceDir()
-        , templateDir = path.join(workspaceDir, "templates", template)
+        , templateDir = path.join(workspaceDir, "repo/stack", template)
         ;
 
     if (!fsutils.exists(templateDir)) {
         if (template === "starter-template") {
-            await repositoryUtil.add("templates", "starter-template", "https://github.com/ProjectFurnace/starter-template");
+            await repositoryUtil.add("repo/stack", "starter-template", "https://github.com/ProjectFurnace/starter-template");
             console.debug("downloading starter template...")
         } else {
             throw new Error(`unable to find template ${name}, use 'furnace template add'`);

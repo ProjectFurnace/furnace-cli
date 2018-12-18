@@ -5,7 +5,6 @@ const program = require("commander")
     , ignite = require("./commands/ignite")
     , _new = require("./commands/new")
     , promote = require("./commands/promote")
-    , template = require("./commands/template")
     , status = require("./commands/status")
     , context = require("./commands/context")
     , destroy = require("./commands/destroy")
@@ -38,9 +37,6 @@ try
       break;
     case "promote":
       promote(process.argv);
-      break;
-    case "template":
-      template(args);
       break;
     case "context":
       context(args);
