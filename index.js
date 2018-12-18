@@ -10,6 +10,7 @@ const program = require("commander")
     , destroy = require("./commands/destroy")
     , _module = require("./commands/module")
     , repo = require("./commands/repo")
+    , secret = require("./commands/secret")
     ;
 
 try
@@ -47,7 +48,9 @@ try
     case "destroy":
       destroy(process.argv);
       break;
-
+    case "secret":
+      secret(args);
+      break;
   }
   
 } catch (err){
