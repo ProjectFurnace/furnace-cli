@@ -22,6 +22,7 @@ module.exports = async () => {
     const lambda = new AWS.Lambda()
         , kinesis = new AWS.Kinesis()
         , elastic = new AWS.ES()
+        , redshift = new AWS.Redshift()
         ;
 
     let functionsToDelete = [];
@@ -79,6 +80,20 @@ module.exports = async () => {
         console.log(`deleting elasticsearch ${domain}`);
         const deleteResult = await elastic.deleteElasticsearchDomain({
             DomainName: domain
+           }).promise()
+    }
+
+    let redshiftsToDelete = [];
+    const redshiftList = await redshift.describeClusters().promise();
+
+    for (let cluster of redshiftList.Clusters) {
+        if (cluster.ClusterIdentifier.startsWith(stackName)) redshiftsToDelete.push(cluster.ClusterIdentifier);
+    }
+
+    for (let cluster of elasticsToDredshiftsToDelete) {
+        console.log(`deleting redshift ${cluster}`);
+        const deleteResult = await redshift.deleteElasticsearchDomain({
+            ClusterIdentifier: cluster
            }).promise()
     }
 
