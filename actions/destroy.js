@@ -90,9 +90,9 @@ module.exports = async () => {
         if (cluster.ClusterIdentifier.startsWith(stackName)) redshiftsToDelete.push(cluster.ClusterIdentifier);
     }
 
-    for (let cluster of elasticsToDredshiftsToDelete) {
+    for (let cluster of redshiftsToDelete) {
         console.log(`deleting redshift ${cluster}`);
-        const deleteResult = await redshift.deleteElasticsearchDomain({
+        const deleteResult = await redshift.deleteCluster({
             ClusterIdentifier: cluster
            }).promise()
     }
