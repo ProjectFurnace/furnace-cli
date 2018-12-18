@@ -1,9 +1,13 @@
 const AWS = require("aws-sdk")
     , workspace = require("../utils/workspace")
+    , stack = require("../utils/stack")
     , context = workspace.getCurrentContext()
     , config = workspace.getConfig()
     , profile = context.awsProfile
-    , region = context.region;
+    , region = context.region
+    , stackConfig = stack.getConfig("stack")
+    , stackName = stackConfig.name
+    ;
 
 if (profile) {
     AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
@@ -19,7 +23,7 @@ module.exports.add = async (environment, name, secret) => {
         return;
     }
 
-    const secretFullName = `${config.current}/${name}-${environment}`;
+    const secretFullName = `${stackName}/${name}-${environment}`;
 
     const existingSecrets = sm.listSecrets({}).promise();
 
@@ -47,7 +51,7 @@ module.exports.del = async (environment, name) => {
         return;
     }
 
-    const secretFullName = `${config.current}/${name}-${environment}`;
+    const secretFullName = `${stackName}/${name}-${environment}`;
 
     const params = {
         SecretId: secretFullName,
