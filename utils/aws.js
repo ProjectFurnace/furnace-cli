@@ -49,7 +49,3 @@ module.exports.getProfiles = () => {
 
     return profiles;
 }
-
-module.exports.createSecret = (name, secret) => {
-    console.log(name, secret);
-}
