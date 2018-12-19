@@ -93,7 +93,8 @@ module.exports = async () => {
     for (let cluster of redshiftsToDelete) {
         console.log(`deleting redshift ${cluster}`);
         const deleteResult = await redshift.deleteCluster({
-            ClusterIdentifier: cluster
+            ClusterIdentifier: cluster,
+            SkipFinalClusterSnapshot: true
            }).promise()
     }
 
