@@ -1,27 +1,23 @@
 const AWS = require("aws-sdk")
     , workspace = require("../utils/workspace")
     , stack = require("../utils/stack")
-    , context = workspace.getCurrentContext()
-    , config = workspace.getConfig()
-    , profile = context.awsProfile
-    , region = context.region
-    , stackConfig = stack.getConfig("stack")
-    , stackName = stackConfig.name
     ;
-
-if (profile) {
-    AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
-}
-
-AWS.config.region = region;
-
-const sm = new AWS.SecretsManager();
 
 module.exports.add = async (environment, name, secret) => {
     if( !environment || !name || !secret ) {
         console.error(`Parameters missing. Please use 'furnace secret add [env] [name] [secret]`);
         return;
     }
+    const context = workspace.getCurrentContext()
+        , profile = context.awsProfile
+        , region = context.region
+        , stackConfig = stack.getConfig("stack")
+        , stackName = stackConfig.name
+        ;
+
+    if (profile) AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
+    AWS.config.region = region;
+    const sm = new AWS.SecretsManager();
 
     const secretFullName = `${stackName}/${name}-${environment}`;
 
@@ -50,6 +46,17 @@ module.exports.del = async (environment, name) => {
         console.error(`Parameters missing. Please use 'furnace secret del [env] [name]`);
         return;
     }
+
+    const context = workspace.getCurrentContext()
+        , profile = context.awsProfile
+        , region = context.region
+        , stackConfig = stack.getConfig("stack")
+        , stackName = stackConfig.name
+        ;
+
+    if (profile) AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
+    AWS.config.region = region;
+    const sm = new AWS.SecretsManager();
 
     const secretFullName = `${stackName}/${name}-${environment}`;
 
