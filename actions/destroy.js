@@ -103,7 +103,7 @@ module.exports = async () => {
     const firehoseList = await firehose.listDeliveryStreams().promise();
 
     for (let stream of firehoseList.DeliveryStreamNames) {
-        if (stream.DeliveryStreamName.startsWith(stackName)) firehosesToDelete.push(stream.DeliveryStreamName);
+        if (stream.startsWith(stackName)) firehosesToDelete.push(stream.DeliveryStreamName);
     }
 
     for (let streamName of firehosesToDelete) {
