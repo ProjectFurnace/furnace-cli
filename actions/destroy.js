@@ -23,6 +23,7 @@ module.exports = async () => {
         , kinesis = new AWS.Kinesis()
         , elastic = new AWS.ES()
         , redshift = new AWS.Redshift()
+        , firehose = new AWS.Firehose()
         ;
 
     let functionsToDelete = [];
@@ -95,6 +96,20 @@ module.exports = async () => {
         const deleteResult = await redshift.deleteCluster({
             ClusterIdentifier: cluster,
             SkipFinalClusterSnapshot: true
+           }).promise()
+    }
+
+    let firehosesToDelete = [];
+    const firehoseList = await firehose.listDeliveryStreams().promise();
+
+    for (let stream of firehoseList.DeliveryStreamNames) {
+        if (stream.DeliveryStreamName.startsWith(stackName)) firehosesToDelete.push(stream.DeliveryStreamName);
+    }
+
+    for (let streamName of firehosesToDelete) {
+        console.log(`deleting firehose ${streamName}`);
+        const deleteResult = await firehose.deleteDeliveryStream({
+            DeliveryStreamName: streamName
            }).promise()
     }
 
