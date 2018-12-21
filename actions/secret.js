@@ -8,9 +8,10 @@ module.exports.add = async (environment, name, secret) => {
         return;
     }
     const stackConfig = stack.getConfig("stack")
+        , workspace = require("../utils/workspace")
         , stackName = stackConfig.name
+        , context = workspace.getCurrentContext()
         ;
-
 
     const sm = new AWS.SecretsManager();
 
@@ -47,12 +48,14 @@ module.exports.del = async (environment, name) => {
     }
 
     const stackConfig = stack.getConfig("stack")
+        , workspace = require("../utils/workspace")
         , stackName = stackConfig.name
+        , context = workspace.getCurrentContext()
         ;
 
     const sm = new AWS.SecretsManager();
 
-    const secretFullName = `${stackName}/${name}-${environment}`;
+    const secretFullName = `${context.name}/${stackName}-${name}-${environment}`;
 
     const params = {
         SecretId: secretFullName,
