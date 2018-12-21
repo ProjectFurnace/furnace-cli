@@ -46,18 +46,20 @@ module.exports.subscribeCloudWatchLogsSource = async (logGroupName, source, filt
           ]
     }
 
+    //TODO: check roles already exist
+
     const roleParams = {
         AssumeRolePolicyDocument: JSON.stringify(iamRole),
         RoleName: roleName
     };
-    // await iam.createRole(roleParams).promise();
+    await iam.createRole(roleParams).promise();
 
     const policyParams = {
         PolicyName: policyName, 
         RoleName: roleName,
         PolicyDocument: JSON.stringify(iamPolicy),
     };
-    // await iam.putRolePolicy(policyParams).promise();
+    await iam.putRolePolicy(policyParams).promise();
 
     const role = await iam.getRole({ RoleName: roleName }).promise();
 
