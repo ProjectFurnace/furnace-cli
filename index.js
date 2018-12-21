@@ -11,49 +11,57 @@ const program = require("commander")
     , _module = require("./commands/module")
     , repo = require("./commands/repo")
     , secret = require("./commands/secret")
+    , aws = require("./commands/aws")
     ;
 
-try
-{ 
-  w.initialize();
-  
-  const initialCommand = program.parse(process.argv);
-  
-  if (initialCommand.args.length == 0) return program.help();
+process.env.NODE_ENV = "production";
 
-  const args = [""].concat(initialCommand.args);
+(async () => {
+  try
+  { 
+    w.initialize();
+    
+    const initialCommand = program.parse(process.argv);
+    
+    if (initialCommand.args.length == 0) return program.help();
 
-  switch (initialCommand.args[0]) {
-    case "ignite":
-      ignite(process.argv);
-      break;
-    case "module":
-      _module(args);
-      break;
-    case "repo":
-      repo(args)
-      break;
-    case "new":
-      _new(process.argv)
-      break;
-    case "promote":
-      promote(process.argv);
-      break;
-    case "context":
-      context(args);
-      break;
-    case "status":
-      status(process.argv);
-      break;
-    case "destroy":
-      destroy(process.argv);
-      break;
-    case "secret":
-      secret(args);
-      break;
+    const args = [""].concat(initialCommand.args);
+
+    switch (initialCommand.args[0]) {
+      case "ignite":
+        ignite(process.argv);
+        break;
+      case "module":
+        _module(args);
+        break;
+      case "repo":
+        repo(args)
+        break;
+      case "new":
+        _new(process.argv)
+        break;
+      case "promote":
+        promote(process.argv);
+        break;
+      case "context":
+        context(args);
+        break;
+      case "status":
+        status(process.argv);
+        break;
+      case "destroy":
+        destroy(process.argv);
+        break;
+      case "secret":
+        secret(args);
+        break;
+      case "aws":
+        aws(args);
+        break;
+    }
+    
+  } catch (err){
+    console.log(err);
+    process.exit(1);
   }
-  
-} catch (err){
-  console.log(err);
-  process.exit(1);
-}
+})();

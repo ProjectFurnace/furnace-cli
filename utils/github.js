@@ -4,6 +4,24 @@ const octokit = require('@octokit/rest')({
     }
 });
 
+
+module.exports.authenticateWithToken = token => {
+    auth(token);
+}
+
+getOwnerRepoFromUrl = (url) => {
+    const repoParts = url.split("/");
+    const repo = repoParts.pop().replace(".git", "");
+    const owner = repoParts.pop();
+
+    return { owner, repo }
+}
+
+auth = token => {
+    octokit.authenticate({ type: 'token', token });
+    
+}
+
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     if (token) auth(token);
 
@@ -108,19 +126,6 @@ module.exports.getAuthenticatedUser = async (token) => {
     return result.data;
 }
 
-module.exports.authenticateWithToken = token => {
-    auth(token);
-}
-
-getOwnerRepoFromUrl = (url) => {
-    const repoParts = url.split("/");
-    const repo = repoParts.pop().replace(".git", "");
-    const owner = repoParts.pop();
-
-    return { owner, repo }
-}
-
-auth = token => {
-    octokit.authenticate({ type: 'token', token });
+module.exports.updateHook = async (token) => {
     
 }

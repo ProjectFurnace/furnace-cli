@@ -1,21 +1,12 @@
-const workspace = require("../utils/workspace")
-    , stack = require("../utils/stack")
-    , AWS = require("aws-sdk")
+const stack = require("../utils/stack")
+    , AWS = require("../utils/aws").getInstance()
     ;
 
 module.exports = async () => {
     const currentStack = stack.getConfig("stack")
         , stackName = currentStack.name
-        , context = workspace.getCurrentContext()
-        , profile = context.awsProfile
-        , region = context.region
         ;
 
-    if (profile) {
-        AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
-    }
-
-    AWS.config.region = region;
 
     console.log(`current stack is ${stackName}`);
 

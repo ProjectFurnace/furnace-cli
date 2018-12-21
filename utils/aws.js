@@ -2,6 +2,7 @@ const fsutils = require("@project-furnace/fsutils")
     , os = require("os")
     , path = require("path")
     , ini = require("ini")
+    , workspace = require("../utils/workspace")
     , AWS = require("aws-sdk")
     ;
 
@@ -17,7 +18,7 @@ module.exports.getConfig = () => {
         config = ini.parse(file);
     }
 
-    return config
+    return config;
 }
 
 module.exports.getCredentials = profile => {
@@ -48,4 +49,19 @@ module.exports.getProfiles = () => {
     } catch (err) {}
 
     return profiles;
+}
+
+module.exports.getInstance = () => {
+    const context = workspace.getCurrentContext()
+        , profile = context.awsProfile
+        , region = context.region
+        ;
+
+    if (profile) {
+        AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
+    }
+
+    AWS.config.region = region;
+
+    return AWS;
 }
