@@ -32,7 +32,7 @@ module.exports.import = (location) => {
         return;
     }
 
-    fsutils.cp(repoModuleDir, path.join(process.cwd(), "module", repoModule[1]));
+    fsutils.cp(repoModuleDir, path.join(process.cwd(), "modules", repoModule[1]));
 }
 
 module.exports.new = async (name, moduleTemplate) => {
