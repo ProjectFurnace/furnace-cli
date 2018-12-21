@@ -3,6 +3,7 @@ const AWS = require("../utils/aws").getInstance();
 module.exports.createCloudWatchLogsGroup = async (logGroupName) => {
     const cwl = new AWS.CloudWatchLogs({apiVersion: '2014-03-28'});
 
+    console.log(`creating log group in region ${AWS.config.region}...`)
     const result = await cwl.createLogGroup({
         logGroupName
     });

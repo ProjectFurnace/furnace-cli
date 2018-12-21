@@ -24,7 +24,7 @@ module.exports = async (directory) => {
         , isGitHub = currentConfig.gitProvider
         , gitHubOrgs = isGitHub ? await githubUtil.getOrgs(currentConfig.gitToken) : []
         , gitHubUser = isGitHub ? await githubUtil.getAuthenticatedUser(currentConfig.gitToken): []
-        , orgList = ["danny-waite", "ProjectFurnace"] // [gitHubUser.login].concat(gitHubOrgs)
+        , orgList = [gitHubUser.login].concat(gitHubOrgs) 
         ;
 
     const questions = [

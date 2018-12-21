@@ -217,7 +217,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
         }
         
         console.log("waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea...")
-        return;
+
         // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
         // const result = await cloudformation.waitFor('stackUpdateComplete', { StackName: name }).promise();
@@ -255,7 +255,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
         })
 
         console.log(`furnace instance now complete.\nto create a new stack, please run:`);
-        console.log(chalk.green(`furnace new [stack_name]`));
+        console.log(chalk.green(`\nfurnace new [stack_name]`));
 
     } catch (err) {
         throw new Error(`unable to ignite furnace: ${err}`)
