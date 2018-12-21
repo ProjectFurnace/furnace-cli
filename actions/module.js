@@ -8,7 +8,7 @@ const workspace = require("../utils/workspace")
 
 module.exports.import = (location) => {
     const repoModuleDir = path.join(workspace.getWorkspaceDir(), "repo", "module", location)
-        , stackModuleDir = path.join(process.cwd(), "modules")
+        , stackModuleDir = path.join(process.cwd(), "module")
         , repoModule = location.split("/")
         ;
 
@@ -32,13 +32,13 @@ module.exports.import = (location) => {
         return;
     }
 
-    fsutils.cp(repoModuleDir, path.join(process.cwd(), "modules", repoModule[1]));
+    fsutils.cp(repoModuleDir, path.join(process.cwd(), "module", repoModule[1]));
 }
 
 module.exports.new = async (name, moduleTemplate) => {
     const templatesDir = path.join(workspace.getWorkspaceDir(), "module-templates")
         , templateDir = path.join(templatesDir, moduleTemplate)
-        , destinationDir = path.join(process.cwd(), "modules", name)
+        , destinationDir = path.join(process.cwd(), "module", name)
         , destinationDefFile = path.join(destinationDir, "module.yaml")
         ;
 

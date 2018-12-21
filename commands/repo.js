@@ -9,7 +9,7 @@ module.exports = (args) => {
     let baseDir;
     switch (type) {
         case "module":
-            baseDir = "repo/modules";
+            baseDir = "repo/module";
             break;
         case "stack":
             baseDir = "repo/stack";
