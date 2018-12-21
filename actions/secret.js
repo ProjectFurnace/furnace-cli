@@ -14,7 +14,7 @@ module.exports.add = async (environment, name, secret) => {
 
     const sm = new AWS.SecretsManager();
 
-    const secretFullName = `${stackName}/${name}-${environment}`;
+    const secretFullName = `${context.name}/${stackName}-${name}-${environment}`;
 
     const existingSecrets = sm.listSecrets({}).promise();
 
@@ -32,8 +32,12 @@ module.exports.add = async (environment, name, secret) => {
         SecretString: secret
     };
     
-    await sm.createSecret(params).promise();
-    console.log(`Secret ${name} for environment ${environment} created successfully`);
+    try {
+        await sm.createSecret(params).promise();
+        console.log(`Secret ${name} for environment ${environment} created successfully`);
+    } catch(e) {
+        console.log(`Secret ${name} for environment ${environment} already exists`);
+    }
 }
 
 module.exports.del = async (environment, name) => {
