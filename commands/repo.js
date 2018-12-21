@@ -19,7 +19,7 @@ module.exports = (args) => {
     }
 
     program
-    .command("add [name] [url]")
+    .command("add <name> <url>")
     .action(async (name, url) => {
         await cmd.add(baseDir, name, url);
     });
@@ -31,7 +31,7 @@ module.exports = (args) => {
     });
 
     program
-    .command("remove [name]")
+    .command("remove <name>")
     .action(async (name) => {
         await cmd.remove(baseDir, name);
     });

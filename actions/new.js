@@ -24,6 +24,7 @@ module.exports = async (directory) => {
         , isGitHub = currentConfig.gitProvider
         , gitHubOrgs = isGitHub ? await githubUtil.getOrgs(currentConfig.gitToken) : []
         , gitHubUser = isGitHub ? await githubUtil.getAuthenticatedUser(currentConfig.gitToken): []
+        , orgList = ["danny-waite", "ProjectFurnace"] // [gitHubUser.login].concat(gitHubOrgs)
         ;
 
     const questions = [
@@ -31,7 +32,7 @@ module.exports = async (directory) => {
         { type: 'input', name: 'remoteUrl', message: "Stack Remote Git URL:", default: "", when: !isGitHub },
         { type: 'input', name: 'stateRemoteUrl', message: "State Remote Git URL:", default: getStateRemoteGitUrl, when: !isGitHub },
         { type: 'input', name: 'stackName', message: "Stack Name:", default: defaultStackName },
-        { type: 'list', name: 'org', message: "GitHub Org:", choices: gitHubOrgs.concat([gitHubUser.login]), when: isGitHub },
+        { type: 'list', name: 'org', message: "GitHub Org:", choices: orgList, when: isGitHub },
         { type: 'input', name: 'repo', message: "GitHub Repository:", default: defaultStackName, when: isGitHub },
         { type: 'input', name: 'stateRepo', message: "Repository:", default: current => current.repo + "-state" },
         { type: 'confirm', name: 'createRepos', message: "Create GitHub Repositories?", when: isGitHub && currentConfig.gitToken },

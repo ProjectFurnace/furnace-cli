@@ -38,7 +38,7 @@ module.exports.import = (location) => {
 module.exports.new = async (name, moduleTemplate) => {
     const templatesDir = path.join(workspace.getWorkspaceDir(), "module-templates")
         , templateDir = path.join(templatesDir, moduleTemplate)
-        , destinationDir = path.join(process.cwd(), "module", name)
+        , destinationDir = path.join(process.cwd(), "modules", name)
         , destinationDefFile = path.join(destinationDir, "module.yaml")
         ;
 

@@ -217,7 +217,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
         }
         
         console.log("waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea...")
-        
+        return;
         // TODO: allow waiting for stackUpdateComplete
         const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
         // const result = await cloudformation.waitFor('stackUpdateComplete', { StackName: name }).promise();

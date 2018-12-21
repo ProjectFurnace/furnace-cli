@@ -3,7 +3,7 @@ const program = require("commander")
 
 module.exports = (args) => {
     program
-    .command("promote [environment]")
+    .command("promote <environment>")
     .action(async (environment) => {
         await cmd(environment);
     });
