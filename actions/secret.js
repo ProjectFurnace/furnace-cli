@@ -1,8 +1,10 @@
-const AWS = require("../utils/aws").getInstance()
+const AWS = require("../utils/aws").getInstance
     , stack = require("../utils/stack")
     ;
 
 module.exports.add = async (environment, name, secret) => {
+    const aws = AWS();
+
     if( !environment || !name || !secret ) {
         console.error(`Parameters missing. Please use 'furnace secret add [env] [name] [secret]`);
         return;
@@ -13,7 +15,7 @@ module.exports.add = async (environment, name, secret) => {
         , context = workspace.getCurrentContext()
         ;
 
-    const sm = new AWS.SecretsManager();
+    const sm = new aws.SecretsManager();
 
     const secretFullName = `${context.name}/${stackName}-${name}-${environment}`;
 
@@ -42,6 +44,8 @@ module.exports.add = async (environment, name, secret) => {
 }
 
 module.exports.del = async (environment, name) => {
+    const aws = AWS();
+
     if( !environment || !name ) {
         console.error(`Parameters missing. Please use 'furnace secret del [env] [name]`);
         return;
@@ -53,7 +57,7 @@ module.exports.del = async (environment, name) => {
         , context = workspace.getCurrentContext()
         ;
 
-    const sm = new AWS.SecretsManager();
+    const sm = new aws.SecretsManager();
 
     const secretFullName = `${context.name}/${stackName}-${name}-${environment}`;
 

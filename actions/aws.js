@@ -1,7 +1,9 @@
-const AWS = require("../utils/aws").getInstance();
+const AWS = require("../utils/aws").getInstance;
 
 module.exports.createCloudWatchLogsGroup = async (logGroupName) => {
-    const cwl = new AWS.CloudWatchLogs({apiVersion: '2014-03-28'});
+    const aws = AWS()
+        , cwl = new aws.CloudWatchLogs({apiVersion: '2014-03-28'})
+        ;
 
     console.log(`creating log group in region ${AWS.config.region}...`)
     const result = await cwl.createLogGroup({
@@ -13,9 +15,10 @@ module.exports.createCloudWatchLogsGroup = async (logGroupName) => {
 }
 
 module.exports.subscribeCloudWatchLogsSource = async (logGroupName, source, filterType, filterPattern) => {
-    const sts = new AWS.STS()
-        , cwl = new AWS.CloudWatchLogs({apiVersion: '2014-03-28'})
-        , iam = new AWS.IAM()
+    const aws = AWS()
+        , sts = new aws.STS()
+        , cwl = new aws.CloudWatchLogs({apiVersion: '2014-03-28'})
+        , iam = new aws.IAM()
         , identity = await sts.getCallerIdentity().promise()
         , account = identity.Account
         ;

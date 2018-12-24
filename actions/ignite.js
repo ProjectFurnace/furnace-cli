@@ -39,8 +39,8 @@ module.exports = async () => {
             { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace", validate: validateInstanceName },
             { type: 'list', name: 'platform', message: "Platform:", choices: ["aws"] },
             //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
-            { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "" },
-            { type: 'password', name: 'npmToken', message: "NPM Access Token:", default: ""},
+            { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "", validate: input => !input ? "Git Access Token is Required": true },
+            { type: 'password', name: 'npmToken', message: "NPM Access Token (enter to skip):", default: ""},
             { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
             { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token", when: current => current.gitProvider === "github" }
         ];
@@ -73,7 +73,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     const profiles = awsUtil.getProfiles()
         , awsCli = which.sync("aws", { nothrow: true })
-        , requireCredentials = !awsCli && profiles.length === 0
+        , requireCredentials = !awsCli || profiles.length === 0
         ;
 
     if (!awsCli) console.log(chalk.red("warning: no AWS CLI installed"))
@@ -109,8 +109,10 @@ async function ingiteAws(answers, resume, awsAnswers) {
     const artifactBucket = name + '-' + region + '-furnace-artifacts-' + randomstring.generate({length: 6, capitalization: 'lowercase'});
     const gitHookSecret = randomstring.generate(16);
     const apiKey = randomstring.generate(16);
-    
+
     if (requireCredentials) {
+        if (!AWS.config.credentials) AWS.config.credentials = {};
+
         AWS.config.credentials.accessKeyId = accessKeyId;
         AWS.config.credentials.secretAccessKey = secretAccessKey;
         // process.env.AWS_ACCESS_KEY_ID = accessKeyId;

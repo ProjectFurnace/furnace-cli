@@ -1,8 +1,10 @@
 const stack = require("../utils/stack")
-    , AWS = require("../utils/aws").getInstance()
+    , AWS = require("../utils/aws").getInstance
     ;
 
 module.exports = async () => {
+    const aws = AWS();
+
     const currentStack = stack.getConfig("stack")
         , stackName = currentStack.name
         ;
@@ -10,11 +12,11 @@ module.exports = async () => {
 
     console.log(`current stack is ${stackName}`);
 
-    const lambda = new AWS.Lambda()
-        , kinesis = new AWS.Kinesis()
-        , elastic = new AWS.ES()
-        , redshift = new AWS.Redshift()
-        , firehose = new AWS.Firehose()
+    const lambda = new aws.Lambda()
+        , kinesis = new aws.Kinesis()
+        , elastic = new aws.ES()
+        , redshift = new aws.Redshift()
+        , firehose = new aws.Firehose()
         ;
 
     let functionsToDelete = [];

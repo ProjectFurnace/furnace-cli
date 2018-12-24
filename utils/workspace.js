@@ -35,6 +35,8 @@ module.exports.initialize = () => {
 
 module.exports.getConfig = () => {
     const configFile = path.join(module.exports.getWorkspaceDir(), "config.json");
+
+    if (!fsutils.exists(configFile)) return null;
     const config = JSON.parse(fsutils.readFile(configFile))
 
     return config;
@@ -47,6 +49,8 @@ module.exports.saveConfig = (config) => {
 
 module.exports.getCurrentContext = () => {
     const config = module.exports.getConfig();
+
+    if (!config) return null;
 
     let context = config[config.current];
     context.name = config.current;

@@ -52,8 +52,11 @@ module.exports.getProfiles = () => {
 }
 
 module.exports.getInstance = () => {
-    const context = workspace.getCurrentContext()
-        , profile = context.awsProfile
+    const context = workspace.getCurrentContext();
+
+    if (!context) throw new Error(`unable to get current context, check the furnace config file at ~/.furnace/config.json`);
+
+    const profile = context.awsProfile
         , region = context.region
         ;
 
