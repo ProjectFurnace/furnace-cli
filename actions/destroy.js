@@ -17,6 +17,7 @@ module.exports = async () => {
         , elastic = new aws.ES()
         , redshift = new aws.Redshift()
         , firehose = new aws.Firehose()
+        , iam = new aws.IAM()
         ;
 
     let functionsToDelete = [];
@@ -63,6 +64,37 @@ module.exports = async () => {
           }).promise()
     }
 
+    let rolesToDelete = []
+    let policiesToDelete = []
+    const rolesList = await iam.listRoles({MaxItems:200}).promise();
+
+    for (let role of rolesList.Roles) {
+        if (role.RoleName.startsWith(stackName)) {
+            rolesToDelete.push(role.RoleName);
+
+            const policiesList = await iam.listRolePolicies({MaxItems:200, RoleName: role.RoleName}).promise();
+
+            for (let policy of policiesList.PolicyNames) {
+                policiesToDelete.push([policy,role.RoleName]);
+            }
+        }
+    }
+
+    for (let policy of policiesToDelete) {
+        console.log(`deleting policy ${policy[0]}`);
+        const deleteResult = await iam.deleteRolePolicy({
+            PolicyName: policy[0],
+            RoleName: policy[1]
+          }).promise()
+    }
+
+    for (let role of rolesToDelete) {
+        console.log(`deleting role ${role}`);
+        const deleteResult = await iam.deleteRole({
+            RoleName: role
+          }).promise()
+    }
+
     let elasticsToDelete = [];
     const elasticList = await elastic.listDomainNames().promise();
 
@@ -96,7 +128,6 @@ module.exports = async () => {
     const firehoseList = await firehose.listDeliveryStreams().promise();
 
     for (let stream of firehoseList.DeliveryStreamNames) {
-        console.log(stream);
         if (stream.startsWith(stackName)) firehosesToDelete.push(stream);
     }
 
