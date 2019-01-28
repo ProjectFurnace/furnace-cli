@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/deploy")
+cmd = require("../actions/deploy")
 
-module.exports = (args) => {
-    program
-    .command("deploy")
-    .action(async () => {
-        await cmd();
-    });
-
-    program.parse(args);
-
+exports.command = 'deploy'
+exports.desc = 'Deploy new Furnace stack'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd();
 }

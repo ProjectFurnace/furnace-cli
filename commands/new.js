@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/new")
+cmd = require("../actions/new")
 
-module.exports = () => {
-    program
-    .command("new [directory]")
-    .action(async (directory) => {
-        await cmd(directory);
-    });
-
-    program.parse(process.argv);
-
+exports.command = 'new <directory>'
+exports.desc = 'Create new furnace stack in <directory>'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd(argv.directory);
 }

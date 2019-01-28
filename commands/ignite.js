@@ -1,15 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/ignite")
+cmd = require("../actions/ignite")
 
-module.exports = async (args) => {
-
-    await program
-        .command("ignite")
-        .action(async () => {
-            await cmd();
-        });
-
-
-    program.parse(args);
-    
+exports.command = 'ignite'
+exports.desc = 'Initialize a new Furnace instance'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd();
 }

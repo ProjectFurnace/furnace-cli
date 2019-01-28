@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/promote")
+cmd = require("../actions/promote")
 
-module.exports = (args) => {
-    program
-    .command("promote <environment>")
-    .action(async (environment) => {
-        await cmd(environment);
-    });
-
-    program.parse(args);
-
+exports.command = 'promote <environment>'
+exports.desc = 'Promote environment <environment>'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd(argv.environment);
 }

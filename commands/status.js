@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/status")
+cmd = require("../actions/status")
 
-module.exports = (args) => {
-    program
-    .command("status")
-    .action(async () => {
-        await cmd();
-    });
-
-    program.parse(args);
-
+exports.command = 'status'
+exports.desc = 'Show stack status'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd();
 }

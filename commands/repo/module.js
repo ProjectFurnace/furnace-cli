@@ -1,5 +1,5 @@
 exports.command = 'module <subcommand>'
-exports.desc = 'Manage modules'
+exports.desc = 'Manage module repos'
 exports.builder = function (yargs) {
   return yargs.commandDir('module')
 }
