@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/destroy")
+cmd = require("../actions/destroy")
 
-module.exports = (args) => {
-    program
-    .command("destroy")
-    .action(async () => {
-        await cmd();
-    });
-
-    program.parse(args);
-
+exports.command = 'destroy'
+exports.desc = 'Destroy Furnace stack'
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd();
 }

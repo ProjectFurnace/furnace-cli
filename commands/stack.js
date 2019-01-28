@@ -1,13 +1,8 @@
-const program = require("commander")
-    , cmd = require("../actions/module")
+cmd = require("../actions/stack")
 
-module.exports = (args) => {
-
-    program
-    .command("update-weboook")
-    .action(async () => {
-        await cmd.import();
-    });
-
-    program.parse(args);
+exports.command = 'update-webhook'
+exports.desc = 'Update '
+exports.builder = {}
+exports.handler = async (argv) => {
+  await cmd.updateWebhook();
 }
