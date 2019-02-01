@@ -1,8 +1,8 @@
-cmd = require("../../actions/module")
+module_actions = require("../../actions/module")
 
 exports.command = 'import <location>'
 exports.desc = 'Import module from <location>'
 exports.builder = {}
 exports.handler = async (argv) => {
-  await cmd.import(argv.location);
+  await module_actions.import(argv.location);
 }
