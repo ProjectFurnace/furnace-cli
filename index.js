@@ -1,23 +1,23 @@
 #! /usr/bin/env node
 
-const program = require("yargs")
-    , w = require("./utils/workspace")
-    ;
+const program = require("yargs");
+const workspace = require("./utils/workspace");
 
 process.env.NODE_ENV = "production";
 
 (async () => {
-  try
-  {
-    w.initialize();
+  workspace.initialize();
     
-    program.commandDir('commands').completion().demandCommand().help().argv
-    
-  } catch (err){
-    console.log('error',err);
-    process.exit(1);
-  }
+  program.commandDir('commands').completion().demandCommand().argv
 })();
+
+function commandFailed(msg, err, yargs) {
+  if( !err )
+    console.error(yargs.help());
+  else {
+    console.log(err);
+  }
+}
 
 
 
