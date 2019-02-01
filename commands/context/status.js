@@ -1,8 +1,8 @@
-cmd = require("../../actions/context")
+context_actions = require("../../actions/context")
 
 exports.command = 'status'
 exports.desc = 'Show current context status'
 exports.builder = {}
 exports.handler = async (argv) => {
-  await cmd.status();
+  await context_actions.status();
 }

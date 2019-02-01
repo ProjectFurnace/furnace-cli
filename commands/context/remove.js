@@ -1,8 +1,8 @@
-cmd = require("../../actions/context")
+context_actions = require("../../actions/context")
 
 exports.command = 'remove <name>'
 exports.desc = 'Remove context <name>'
 exports.builder = {}
 exports.handler = async (argv) => {
-  await cmd.remove(argv.name);
+  await context_actions.remove(argv.name);
 }

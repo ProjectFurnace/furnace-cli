@@ -39,14 +39,17 @@ module.exports = async () => {
             { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace", validate: validateInstanceName },
             { type: 'list', name: 'platform', message: "Platform:", choices: ["aws"] },
             //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
-            { type: 'password', name: 'gitToken', message: "Git Access Token:", default: "", validate: input => !input ? "Git Access Token is Required": true },
+            { type: 'password', name: 'gitToken', message: "GitHub Access Token:", default: "", validate: input => !input ? "GitHub Access Token is Required": true },
             { type: 'password', name: 'npmToken', message: "NPM Access Token (enter to skip):", default: ""},
-            { type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
-            { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token", when: current => current.gitProvider === "github" }
+            //{ type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
+            { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token" } //, when: current => current.gitProvider === "github" }
         ];
     
         answers = await inquirer.prompt(questions);
     }
+
+    // delete when we reenable git provider selection
+    answers.gitProvider = 'github';
     
     switch (answers.platform) {
         case "aws":
