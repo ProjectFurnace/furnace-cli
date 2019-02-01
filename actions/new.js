@@ -18,7 +18,7 @@ module.exports = async (directory) => {
         , currentConfig = config[config.current]
         ;
     
-    if (currentDirectoryFiles.length > 0) throw new Error(`furnace new must be done in an empty directory`);
+    if (currentDirectoryFiles.length > 0) throw new Error('furnace new must be done in an empty directory');
 
     const defaultStackName = path.basename(currentDir)
         , isGitHub = currentConfig.gitProvider
