@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/ProjectFurnace/furnace-cli.git"
   },
-  "author": "Danny Waite <danny.waite@***REMOVED***>",
+  "author": "Danny Waite <danny.waite@furnace.org>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/ProjectFurnace/furnace-cli/issues"
