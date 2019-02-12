@@ -1,5 +1,5 @@
 const octokit = require('@octokit/rest')({
-    userAgent: 'FurnaceCLI v1.0.2',
+    userAgent: 'FurnaceCLI v1.0.3',
     previews: ['machine-man-preview']
 });
 
