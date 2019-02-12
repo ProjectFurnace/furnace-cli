@@ -1,12 +1,12 @@
 const octokit = require('@octokit/rest')({
-    headers: {
-      accept: 'application/vnd.github.machine-man-preview',
-    }
+    userAgent: 'FurnaceCLI v1.0.2',
+    previews: ['machine-man-preview']
 });
 
 
 module.exports.authenticateWithToken = token => {
-    auth(token);
+    //auth(token);
+    octokit.auth = 'token ' + token
 }
 
 getOwnerRepoFromUrl = (url) => {
@@ -17,10 +17,10 @@ getOwnerRepoFromUrl = (url) => {
     return { owner, repo }
 }
 
-auth = token => {
+/*auth = token => {
     octokit.authenticate({ type: 'token', token });
     
-}
+}*/
 
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     if (token) auth(token);
