@@ -1,4 +1,4 @@
-const octokit = require('@octokit/rest')({
+let octokit = require('@octokit/rest')({
     userAgent: 'FurnaceCLI v1.0.3',
     previews: ['machine-man-preview']
 });
@@ -6,7 +6,6 @@ const octokit = require('@octokit/rest')({
 
 module.exports.authenticateWithToken = token => {
     auth(token);
-    //octokit.auth = 'token ' + token
 }
 
 getOwnerRepoFromUrl = (url) => {
@@ -18,8 +17,11 @@ getOwnerRepoFromUrl = (url) => {
 }
 
 auth = token => {
-    //octokit.authenticate({ type: 'token', token });
-    octokit.auth = 'token ' + token
+    octokit = require('@octokit/rest')({
+        userAgent: 'FurnaceCLI v1.0.3',
+        previews: ['machine-man-preview'],
+        auth: 'token ' + token
+    });
 }
 
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
