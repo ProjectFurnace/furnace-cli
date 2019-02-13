@@ -5,8 +5,8 @@ const octokit = require('@octokit/rest')({
 
 
 module.exports.authenticateWithToken = token => {
-    //auth(token);
-    octokit.auth = 'token ' + token
+    auth(token);
+    //octokit.auth = 'token ' + token
 }
 
 getOwnerRepoFromUrl = (url) => {
@@ -17,10 +17,10 @@ getOwnerRepoFromUrl = (url) => {
     return { owner, repo }
 }
 
-/*auth = token => {
-    octokit.authenticate({ type: 'token', token });
-    
-}*/
+auth = token => {
+    //octokit.authenticate({ type: 'token', token });
+    octokit.auth = 'token ' + token
+}
 
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     if (token) auth(token);
