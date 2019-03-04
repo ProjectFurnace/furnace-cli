@@ -103,7 +103,7 @@ module.exports = async (argv) => {
     });
   }
 
-  const stackName = `${stackDef.name}-scratch`;
+  const stackName = `${stackDef.name}-sandbox`;
 
   await execProcess(`pulumi stack init ${stackName}`, false);
   await execProcess(`pulumi config set --plaintext aws:region ${context.region}`);
