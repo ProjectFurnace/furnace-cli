@@ -103,6 +103,8 @@ module.exports = async (argv) => {
     });
   }
 
+  await execProcess(`npm install`, true);
+
   const stackName = `${stackDef.name}-sandbox`;
 
   await execProcess(`pulumi stack init ${stackName}`, false);
