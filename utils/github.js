@@ -1,12 +1,11 @@
-const octokit = require('@octokit/rest')({
-    userAgent: 'FurnaceCLI v1.0.3',
+let octokit = require('@octokit/rest')({
+    userAgent: 'FurnaceCLI v1.0.4',
     previews: ['machine-man-preview']
 });
 
 
 module.exports.authenticateWithToken = token => {
-    //auth(token);
-    octokit.auth = 'token ' + token
+    auth(token);
 }
 
 getOwnerRepoFromUrl = (url) => {
@@ -17,10 +16,14 @@ getOwnerRepoFromUrl = (url) => {
     return { owner, repo }
 }
 
-/*auth = token => {
-    octokit.authenticate({ type: 'token', token });
-    
-}*/
+//TODO: Refactor this. It's far from elegant but Octokit was working in quite a different way before and this is a quick fix
+auth = token => {
+    octokit = require('@octokit/rest')({
+        userAgent: 'FurnaceCLI v1.0.4',
+        previews: ['machine-man-preview'],
+        auth: 'token ' + token
+    });
+}
 
 module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     if (token) auth(token);

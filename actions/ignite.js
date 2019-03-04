@@ -167,6 +167,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     const stackParams = {
         StackName: name,
+        //OnFailure: 'DELETE',
         Capabilities: ["CAPABILITY_NAMED_IAM"],
         TemplateBody: fsutils.readFile(templateFile),
         Parameters: [
@@ -270,7 +271,19 @@ async function ingiteAws(answers, resume, awsAnswers) {
         console.log(chalk.green(`\nfurnace new [stack_name]`));
 
     } catch (err) {
-        throw new Error(`unable to ignite furnace: ${err}`)
+        // the stack creation timed out
+        if (err.code && err.code === 'ResourceNotReady') {
+            const stackEventsPromise = await cloudformation.describeStackEvents({ StackName: name }).promise();
+
+            //loop through the events of stack creation to find the first one that failed
+            const errorEvent = stackEventsPromise.StackEvents.reverse().find(elem => {
+                if (elem.ResourceStatus === 'CREATE_FAILED')
+                    return elem;
+            });
+
+            throw errorEvent.ResourceStatusReason;
+        }
+        throw err
     }
 }
 
