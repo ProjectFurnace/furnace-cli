@@ -3,10 +3,11 @@ const workspace = require("../utils/workspace")
     , fsutils = require("@project-furnace/fsutils")
     , repository = require("../utils/repository")
     , yaml = require("yamljs")
+    , gitutils = require("@project-furnace/gitutils")
     ;
 
 
-module.exports.import = (location) => {
+module.exports.import = async (location) => {
     const repoModuleDir = path.join(workspace.getWorkspaceDir(), "repo", "module", location)
         , stackModuleDir = path.join(process.cwd(), "module")
         , repoModule = location.split("/")
@@ -31,6 +32,8 @@ module.exports.import = (location) => {
         console.log("module currently exists in stack");
         return;
     }
+
+    await gitutils.pull(path.join(workspace.getWorkspaceDir(), "repo", "module", repoModule[0]));
 
     fsutils.cp(repoModuleDir, path.join(process.cwd(), "modules", repoModule[1]));
     console.log(`module ${location} imported successfully`)
