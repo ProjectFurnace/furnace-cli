@@ -16,9 +16,9 @@ const gitutils = require("@project-furnace/gitutils")
 module.exports = async () => {
 
     let status = getIgniteStatus()
-      , resume = false
-      , answers = {}
-      ;
+    , resume = false
+    , answers = {}
+    ;
 
     if (status && status.state !== "complete") { 
 
