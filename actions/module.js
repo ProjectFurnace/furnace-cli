@@ -18,7 +18,7 @@ module.exports.import = (location) => {
     }
 
     if (!fsutils.exists(path.join(process.cwd(), "stack.yaml"))) {
-        console.log("you must be inside a furnace stack");
+        console.log("you must be inside a furnace stack folder");
         return;
     }
     
@@ -33,6 +33,7 @@ module.exports.import = (location) => {
     }
 
     fsutils.cp(repoModuleDir, path.join(process.cwd(), "modules", repoModule[1]));
+    console.log(`module ${location} imported successfully`)
 }
 
 module.exports.new = async (name, moduleTemplate) => {

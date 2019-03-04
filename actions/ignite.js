@@ -71,7 +71,7 @@ async function ingiteAws(answers, resume, awsAnswers) {
         , templateDir = path.join(bootstrapDir, platform)
         , templateFile = path.join(templateDir, "template", "furnaceIgnite.template") // "simple.template"
         , coreModulesRemote = "https://github.com/ProjectFurnace/modules-core"
-        , coreModulesRepoDir = path.join(workspaceDir, "repo")
+        , coreModulesRepoDir = path.join(workspaceDir, "repo", "module", "core")
         ;
 
     const profiles = awsUtil.getProfiles()
@@ -126,8 +126,8 @@ async function ingiteAws(answers, resume, awsAnswers) {
         s3utils.setCredentials(AWS.config.credentials);
     }
 
-    if (!fsutils.exists(bootstrapDir + '/.git')) {
-        console.debug(`cloning ${bootstrapRemote} to ${bootstrapDir}...`)
+    if (!fsutils.exists(path.join( bootstrapDir, '.git'))) {
+        console.debug(`cloning ${bootstrapRemote} to ${bootstrapDir}...`);
         if (!fsutils.exists(bootstrapDir)) {
             fsutils.mkdir(bootstrapDir);
         }
@@ -139,8 +139,15 @@ async function ingiteAws(answers, resume, awsAnswers) {
 
     if (!fsutils.exists(templateDir)) throw new Error(`unable to find bootstrap template at ${templateDir}`);
 
-    if (!fsutils.exists(coreModulesRepoDir)) {
+    if (!fsutils.exists(path.join( coreModulesRepoDir, '.git'))) {
+        console.debug(`cloning ${coreModulesRemote} to ${coreModulesRepoDir}...`);
+        if (!fsutils.exists(coreModulesRepoDir)) {
+            fsutils.mkdir(coreModulesRepoDir);
+        }
         await gitutils.clone(coreModulesRepoDir, coreModulesRemote, "", "");
+    } else {
+        console.debug(`pulling latest modules...`);
+        await gitutils.pull(coreModulesRepoDir);
     }
 
     const bucketExists = await s3utils.bucketExists(codeBucket);
