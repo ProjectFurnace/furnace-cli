@@ -1,6 +1,6 @@
 {
   "name": "@project-furnace/furnace-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -22,10 +22,10 @@
   },
   "dependencies": {
     "@octokit/rest": "^16.15.0",
-    "@project-furnace/fsutils": "^0.1.5",
-    "@project-furnace/gitutils": "^0.1.3",
-    "@project-furnace/s3utils": "^0.1.5",
-    "@project-furnace/ziputils": "^0.1.3",
+    "@project-furnace/fsutils": "^0.1.6",
+    "@project-furnace/gitutils": "^0.1.4",
+    "@project-furnace/s3utils": "^0.1.6",
+    "@project-furnace/ziputils": "^0.1.4",
     "aws-sdk": "^2.368.0",
     "chalk": "^2.4.1",
     "commander": "^2.19.0",
