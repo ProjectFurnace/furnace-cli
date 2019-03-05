@@ -22,7 +22,6 @@ module.exports = async (env, name) => {
         }
       , awsOpts = { region : context.region  }
       ;
-      console.log(filterOpts, awsOpts)
 
   const eventStream = new CWLogFilterEventStream(filterOpts,awsOpts);
   eventStream.on('error', function(err){
