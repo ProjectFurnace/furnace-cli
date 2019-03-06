@@ -1,5 +1,4 @@
 const workspace = require("../utils/workspace")
-    , context = workspace.getCurrentContext()
     , stackUtils = require("../utils/stack")
     , fsUtils = require("@project-furnace/fsutils")
     , path = require("path")
@@ -8,8 +7,10 @@ const workspace = require("../utils/workspace")
     ;
 
 module.exports = async (env, name) => {
+  const context = workspace.getCurrentContext()
+      , stackFile = path.join(process.cwd(), "stack.yaml")
+      ;
 
-  const stackFile = path.join(process.cwd(), "stack.yaml");
   if (!fsUtils.exists(stackFile)) {
     console.error("you must be inside a furance stack directory");
     return;
