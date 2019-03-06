@@ -14,11 +14,20 @@ module.exports = async (env, name) => {
     console.error("you must be inside a furance stack directory");
     return;
   }
+
+  let dateOffset = (60*1000) // 1 minute
+      , startTime = new Date()
+      ;
+
+  startTime.setTime(startTime.getTime() - dateOffset);
+  startTime = startTime.getTime();
+
   const stack = stackUtils.getConfig("stack")
       , logGroupName = `/aws/lambda/${stack.name}-${name}-${env}`
       , filterOpts = {
           logGroupName,
-          follow: true
+          follow: true,
+          startTime
         }
       , awsOpts = { region : context.region  }
       ;
