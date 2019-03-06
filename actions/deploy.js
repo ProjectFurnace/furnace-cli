@@ -2,7 +2,6 @@ const which = require("which")
     , gitUtils = require("@project-furnace/gitutils")
     , fsUtils = require("@project-furnace/fsutils")
     , workspace = require("../utils/workspace")
-    , context = workspace.getCurrentContext()
     , awsUtil = require("../utils/aws")
     , path = require("path")
     , yaml = require('yamljs')
@@ -11,6 +10,7 @@ const which = require("which")
 
 module.exports = async (argv) => {
   const workspaceDir = workspace.getWorkspaceDir()
+      , context = workspace.getCurrentContext()
       , deployDir = path.join(workspaceDir, "deploy")
       , functionTemplatesDir = path.join(workspaceDir, "function-templates")
       , deployUrl = "https://github.com/ProjectFurnace/deploy.git"
@@ -34,6 +34,10 @@ module.exports = async (argv) => {
     console.log("cloning deploy source...");
     fsUtils.mkdir(deployDir);
     await gitUtils.clone(deployDir, deployUrl, "", "");
+  }
+
+  if (!fsUtils.exists(path.join(deployDir, "node_modules"))) {
+    await execProcess(`npm install`);
   }
 
   if (!fsUtils.exists(functionTemplatesDir)) {
@@ -102,8 +106,6 @@ module.exports = async (argv) => {
       });
     });
   }
-
-  await execProcess(`npm install`, true);
 
   const stackName = `${stackDef.name}-sandbox`;
 
