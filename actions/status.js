@@ -22,8 +22,9 @@ module.exports = async () => {
             console.log(`  timestamp ${chalk.green(deployment.created_at)} ref ${chalk.green(deployment.ref)} sha ${chalk.green(deployment.sha.substring(0, 8))}`);
     
             const statuses = await github.listDeploymentStatuses(context.gitToken, remoteUrl, deployment.id);
-            for (let status of statuses) {
-                console.log(`    ${stateToColour(status.state)}`);
+            console.log('    statuses the deployment has gone through:');
+            for ( let status of statuses) {
+                console.log(`      ${stateToColour(status.state)}: ${status.description} [${status.updated_at}]`);
             }
             break;   
         }
