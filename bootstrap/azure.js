@@ -2,7 +2,7 @@ const azureUtils = require("../utils/azure")
   , util = require("util")
   , fs = require("fs")
   , ResourceManagementClient = require("azure-arm-resource").ResourceManagementClient
-  , StorageManagementClient = require("azure-asm-storage").StorageManagementClient
+  , StorageManagementClient = require("azure-asm-storage").StorageManagementClient.StorageManagementClient
   ;
 
 module.exports.ignite = (location, subscriptionId, templateFile) => {
