@@ -1,7 +1,7 @@
 const msrestazure = require("ms-rest-azure")
     , moment = require("moment")
     , graph = require("azure-graph")
-    , authorization = require("azure-arm-authorization");
+    , Azure = require('azure')
     ;
 
 module.exports.interactiveLogin = () => {
