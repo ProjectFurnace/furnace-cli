@@ -46,12 +46,6 @@ module.exports = async (argv) => {
     return;
   }
 
-  if (!fsUtils.exists(functionTemplatesDir)) {
-    fsUtils.mkdir(functionTemplatesDir);
-    await gitUtils.clone(functionTemplatesDir, functionTemplatesUrl, "", "");
-    return;
-  }
-
   if (!fsUtils.exists(stackFilePath)) {
     console.error("unable to find stack.yaml in current directory");
     return;
