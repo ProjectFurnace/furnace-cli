@@ -173,7 +173,7 @@ async function ingiteAzure(answers, resume) {
         artifactBucket
     } = await initialiseIgnite(name, location, platform, "template.json", gitProvider, gitToken);
 
-    const deployResult = await azureBootstrap.ignite(location, subscriptionId, templateFile);
+    const deployResult = await azureBootstrap.ignite(name, location, subscriptionId, templateFile);
 
     if (deployResult && deployResult.properties && deployResult.properties.provisioningState) {
         console.log(`deployment result was ${deployResult.properties.provisioningState}`);
