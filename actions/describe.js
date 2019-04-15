@@ -36,9 +36,8 @@ module.exports = async (argv) => {
   for(let component of components) {
     switch (component.type) {
       case "Module":
-      
         try {
-          const lambdaResource = await lambda.getFunction({ FunctionName: component.resource }).promise()
+          const lambdaResource = await lambda.getFunction({ FunctionName: component.resource }).promise();
           component.status = "Created";
         } catch (err) {
           component.status = "Not Found";
@@ -51,7 +50,7 @@ module.exports = async (argv) => {
 
       case "KinesisStream":
         try {
-          const kinesisResource = await kinesis.describeStream({ StreamName: component.resource }).promise()
+          const kinesisResource = await kinesis.describeStream({ StreamName: component.resource }).promise();
           component.status = "Created";
         } catch (err) {
           component.status = "Not Found";
