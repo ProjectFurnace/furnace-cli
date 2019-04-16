@@ -83,19 +83,19 @@ module.exports = async () => {
             await ingiteAws(answers, resume, status ? status.awsAnswers : null);
             break;
         case "azure":
-            await ingiteAzure(answers, resume);
+            await ingiteAzure(answers);
             break;
         default:
             throw new Error(`platform ${answers.platform} is not currently supported`);
     }
 }
 
-async function initialiseIgnite(name, region, platform, platformTemplate, gitProvider, gitToken) {
+async function initialiseIgnite(name, region, platform, gitProvider, gitToken) {
     const bootstrapRemote = `https://github.com/ProjectFurnace/bootstrap`
         , workspaceDir = workspace.getWorkspaceDir()
         , bootstrapDir = path.join(workspaceDir, "bootstrap")
-        , templateDir = path.join(bootstrapDir, platform)
-        , templateFile = path.join(templateDir, "template", platformTemplate)
+        , templateDir = path.join(bootstrapDir, platform, "template")
+        , functionsDir = path.join(bootstrapDir, platform, "functions")
         , coreModulesRemote = "https://github.com/ProjectFurnace/modules-core"
         , coreModulesRepoDir = path.join(workspaceDir, "repo", "module", "core")
         , gitHookSecret = randomstring.generate(16)
@@ -141,7 +141,7 @@ async function initialiseIgnite(name, region, platform, platformTemplate, gitPro
         bootstrapRemote,
         workspaceDir,
         bootstrapDir,
-        templateFile,
+        templateDir,
         coreModulesRemote,
         coreModulesRepoDir,
         gitProvider,
@@ -149,7 +149,7 @@ async function initialiseIgnite(name, region, platform, platformTemplate, gitPro
         apiKey,
         bootstrapBucket,
         artifactBucket,
-        platformTemplate
+        functionsDir
     };
 }
 
@@ -165,15 +165,15 @@ async function ingiteAzure(answers, resume) {
     const azureAnswers = await getMissingOptions(questions, answers);
     const { location, subscriptionId } = azureAnswers;
 
+    const igniteConfig = await initialiseIgnite(name, location, platform, "template.json", gitProvider, gitToken);
     const {
-        templateFile,
         gitHookSecret,
         apiKey,
         bootstrapBucket,
         artifactBucket
-    } = await initialiseIgnite(name, location, platform, "template.json", gitProvider, gitToken);
+    } = igniteConfig;
 
-    const deployResult = await azureBootstrap.ignite(name, location, subscriptionId, templateFile);
+    const deployResult = await azureBootstrap.ignite(name, location, subscriptionId, igniteConfig);
 
     if (deployResult && deployResult.properties && deployResult.properties.provisioningState) {
         console.log(`deployment result was ${deployResult.properties.provisioningState}`);
@@ -224,12 +224,14 @@ async function ingiteAws(answers, resume, awsAnswers) {
     if (!region) throw new Error(`aws region must be defined`);
 
     const {
-        templateFile,
         gitHookSecret,
         apiKey,
         bootstrapBucket,
-        artifactBucket
-    } = await initialiseIgnite(name, region, platform, "furnaceIgnite.template", gitProvider, gitToken);
+        artifactBucket,
+        templateDir
+    } = await initialiseIgnite(name, region, platform, gitProvider, gitToken);
+
+    const templateFile = path.join(templateDir, "template", "furnaceIgnite.template");
 
     AWS.config.region = region;
 
