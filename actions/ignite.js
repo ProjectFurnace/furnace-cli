@@ -45,7 +45,8 @@ module.exports = async () => {
             { name: 'platform', alias: 'p', type: String },
             { name: 'name', alias: 'i', type: String },
             { name: 'gitProvider', alias: 'g', type: String },
-            { name: 'gitToken', alias: 't', type: String }
+            { name: 'gitToken', alias: 't', type: String },
+            { name: 'storeGitHubToken', defaultValue: true }
         ]
         const mainOptions = commandLineArgs(mainDefinitions, { stopAtFirstUnknown: true })
         const argv = mainOptions._unknown || []
@@ -168,10 +169,12 @@ async function ingiteAzure(answers, resume) {
     const igniteConfig = await initialiseIgnite(name, location, platform, "template.json", gitProvider, gitToken);
     const {
         gitHookSecret,
-        apiKey,
         bootstrapBucket,
-        artifactBucket
+        artifactBucket,
+        apiKey
     } = igniteConfig;
+
+    igniteConfig.gitToken = gitToken;
 
     const deployResult = await azureBootstrap.ignite(name, location, subscriptionId, igniteConfig);
 
@@ -188,8 +191,8 @@ async function ingiteAzure(answers, resume) {
         codeBucket: bootstrapBucket,
         gitToken: storeGitHubToken ? gitToken : null,
         gitHookSecret: gitHookSecret,
-        // apiUrl,
-        // apiKey,
+        apiUrl: deployResult.properties.outputs.apiUrl.value,
+        apiKey,
         gitProvider,
         artifactBucketConnectionString: deployResult.properties.outputs.connectionString.value
     }

@@ -12,8 +12,8 @@ const Azure = require('azure')
 module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) => {
 
   const { templateDir, functionsDir } = igniteConfig
-      , initialTemplate = path.join(templateDir, "template.json")
-      , bootstrapTemplate = path.join(templateDir, "template.json")
+      , initialTemplate = path.join(templateDir, "base.json")
+      , bootstrapTemplate = path.join(templateDir, "bootstrap.json")
 
   const resourceGroupName = `${instanceName}rg`
     , storageAccountName = `${instanceName}sa`
@@ -39,8 +39,14 @@ module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) =
       "containerName": {
         "value": storageContainerName + "f"
       },
-      "location": {
-        "value": location
+      "ApiKey": {
+        "value": igniteConfig.apiKey
+      },
+      "GitToken": {
+        "value": igniteConfig.gitToken
+      },
+      "GitHookSecret": {
+        "value": igniteConfig.gitHookSecret
       }
     }
     ;
@@ -57,13 +63,14 @@ module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) =
   }).then(() => {
     return loadTemplateAndDeploy(resourceClient, resourceGroupName, initialDeploymentName, initialTemplate, initialTemplateParameters);
   }).then(() => {
-    return buildFunctions(functionsDir);
+    return buildFunctions(functionsDir, resourceGroupName);
   }).then((artifact) => {
     artifactPath = artifact;
     return getStorageKey(storageClient, resourceGroupName, storageAccountName);
   }).then((storageKey) => {
     return upload(storageKey, storageAccountName, storageContainerName, artifactKey, artifactPath)
-  }).then(() => {
+  }).then((blobUrl) => {
+    bootstrapTemplateParameters.blobUrl = {"value":blobUrl};
     return loadTemplateAndDeploy(resourceClient, resourceGroupName, bootstrapDeploymentName, bootstrapTemplate, bootstrapTemplateParameters);
   }).then(deployResult => {
     return deployResult;
@@ -86,11 +93,59 @@ function getStorageKey(storageClient, resourceGroupName, storageAccountName) {
   });
 }
 
-function buildFunctions(functionsDir) {
+function buildFunctions(functionsDir, resourceGroupName) {
       console.log("building functions...");
 
       const tempDir = fsUtils.createTempDirectory()
           , uploadPackage = path.join(tempDir, "bootstrapFunctions.zip")
+          , execPath = path.join(functionsDir, 'deploy-exec/function.json')
+          , triggerPath = path.join(functionsDir, 'deploy-trigger/function.json');
+
+
+      const triggerraw = fsUtils.readFile(triggerPath)
+          , triggerjson = JSON.parse(triggerraw);
+
+      const execraw = fsUtils.readFile(execPath)
+          , execjson = JSON.parse(execraw);
+    
+      const triggerBindings = [{
+          type: 'httpTrigger',
+          direction: 'in',
+          name: 'request',
+          authLevel: 'anonymous',
+          route: 'deploy-trigger/hook'
+      },
+      {
+          type: 'eventHub',
+          direction: 'out',
+          name: 'eventOutput',
+          eventHubName: resourceGroupName + '-deployHub',
+          connection: 'eventPullConnectionString'
+      },
+      {
+          type: "http",
+          direction: "out",
+          name: "$return"
+      }];  
+
+      const execBindings = [{
+          type: 'eventHubTrigger',
+          direction: 'in',
+          name: 'eventInput',
+          eventHubName: resourceGroupName + '-deployHub',
+          connection: 'eventPullConnectionString'
+      },
+      {
+          type: "http",
+          direction: "out",
+          name: "$return"
+      }];      
+    
+      triggerjson.bindings = triggerBindings;
+      execjson.bindings = execBindings;
+
+      fsUtils.writeFile(triggerPath, JSON.stringify(triggerjson));
+      fsUtils.writeFile(execPath, JSON.stringify(execjson));
 
       fsUtils.cp(functionsDir, tempDir);
       fsUtils.writeFile(path.join(tempDir, "host.json"), JSON.stringify({ version: "2.0" }));
@@ -109,8 +164,11 @@ function buildFunctions(functionsDir) {
 `
       );
 
-      return execPromise("func extensions install", { cwd: tempDir, env: process.env})
-      .then(() => {
+      return execPromise("npm install --production", { cwd: path.join(tempDir, 'deploy-trigger/'), env: process.env }).then(() => {
+        return execPromise("npm install --production", { cwd: path.join(tempDir, 'deploy-exec/'), env: process.env })
+      }).then(() => {
+        return execPromise("func extensions install", { cwd: tempDir, env: process.env});
+      }).then(() => {
         return zipUtils.compress(tempDir, uploadPackage);
       }).then(() => {
         return Promise.resolve(uploadPackage);
@@ -191,7 +249,24 @@ function upload(storageKey, storageAccountName, storageContainerName, key, artif
 
     blobService.createBlockBlobFromLocalFile(storageContainerName, key, artifactPath, (error, result) => {
       if (error) reject(error);
-      else resolve(result);
+      else {
+        var startDate = new Date();
+        var expiryDate = new Date(startDate);
+        expiryDate.setFullYear(startDate.getFullYear() + 100);
+        startDate.setMinutes(startDate.getMinutes() - 100);
+  
+        var sharedAccessPolicy = {
+          AccessPolicy: {
+            Permissions: azureStorage.BlobUtilities.SharedAccessPermissions.READ,
+            Start: startDate,
+            Expiry: expiryDate
+          }
+        };
+
+        var token = blobService.generateSharedAccessSignature(storageContainerName, key, sharedAccessPolicy);
+        var sasUrl = blobService.getUrl(storageContainerName, key, token);
+        resolve(sasUrl);
+      }
     });
   });
 }
