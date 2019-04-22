@@ -13,6 +13,7 @@ const gitutils = require("@project-furnace/gitutils")
     , randomstring = require("randomstring")
     , azureBootstrap = require("../bootstrap/azure")
     , commandLineArgs = require("command-line-args")
+    , util = require("util")
     ;
 
 module.exports = async () => {
@@ -154,7 +155,7 @@ async function initialiseIgnite(name, region, platform, gitProvider, gitToken) {
     };
 }
 
-async function ingiteAzure(answers, resume) {
+async function ingiteAzure(answers) {
 
     const { name, platform, gitToken, npmToken, gitProvider, storeGitHubToken } = answers;
 
@@ -166,7 +167,7 @@ async function ingiteAzure(answers, resume) {
     const azureAnswers = await getMissingOptions(questions, answers);
     const { location, subscriptionId } = azureAnswers;
 
-    const igniteConfig = await initialiseIgnite(name, location, platform, "template.json", gitProvider, gitToken);
+    const igniteConfig = await initialiseIgnite(name, location, platform, gitProvider, gitToken);
     const {
         gitHookSecret,
         bootstrapBucket,
@@ -177,7 +178,7 @@ async function ingiteAzure(answers, resume) {
     igniteConfig.gitToken = gitToken;
 
     const deployResult = await azureBootstrap.ignite(name, location, subscriptionId, igniteConfig);
-
+    
     if (deployResult && deployResult.properties && deployResult.properties.provisioningState) {
         console.log(`deployment result was ${deployResult.properties.provisioningState}`);
     } else {
