@@ -7,32 +7,78 @@ const Azure = require('azure')
     , exec = require("child_process").exec
     , zipUtils = require("@project-furnace/ziputils")
     , azureStorage = require("azure-storage")
+    , util = require("util")
     ;
 
 module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) => {
 
-  const { templateDir, functionsDir } = igniteConfig
-      , initialTemplate = path.join(templateDir, "base.json")
-      , bootstrapTemplate = path.join(templateDir, "bootstrap.json")
-
+  const { templateDir, functionsDir } = igniteConfig;
   const resourceGroupName = `${instanceName}rg`
-    , storageAccountName = `${instanceName}sa`
-    , storageContainerName = `${instanceName}c`
-    , initialDeploymentName = `${instanceName}Initial`
-    , bootstrapDeploymentName = `${instanceName}Bootstrap`
-    , artifactKey = "bootstrapFunctions"
-    , initialTemplateParameters = {
-      "storageAccountName": {
-        "value": storageAccountName
-      },
-      "containerName": {
-        "value": storageContainerName
-      },
-      "location": {
-        "value": location
+      , storageAccountName = `${instanceName}sa`
+      , storageContainerName = `${instanceName}c`
+      , artifactKey = "bootstrapFunctions.zip"
+      ;
+
+  let resourceClient, storageClient, artifactPath, restClient, deploymentContainerExecRoleId;
+
+  return azureUtils.login().then(credentials => {
+    resourceClient = new ResourceManagementClient(credentials, subscriptionId);
+    storageClient = Azure.createStorageManagementClient(credentials, subscriptionId);
+
+    const accessToken = credentials.tokenCache._entries[credentials.tokenCache._entries.length - 1].accessToken;
+
+    restClient = azureUtils.getHttpClient(`https://management.azure.com/subscriptions/${subscriptionId}`, accessToken);
+
+    return createResourceGroup(resourceClient, resourceGroupName, location);
+  }).then(() => {
+    return createDeploymentContainerExecRole(restClient, location, templateDir);
+  }).then((createDeploymentContainerExecRoleResult) => {
+    deploymentContainerExecRoleId = createDeploymentContainerExecRoleResult.properties.parameters.roleDefName.value;
+    return createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir);
+  }).then((createDeploymentUserIdentityResult) => {
+    const principalId = createDeploymentUserIdentityResult.properties.outputs.principalId.value;
+    return assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId);
+  }).then(() => {
+    return deployInitialTemplate(resourceClient, resourceGroupName, instanceName, location, storageAccountName, storageContainerName, templateDir);
+  }).then(() => {
+    return buildFunctions(functionsDir, resourceGroupName);
+  }).then((artifact) => {
+    artifactPath = artifact;
+    return getStorageKey(storageClient, resourceGroupName, storageAccountName);
+  }).then((storageKey) => {
+    return upload(storageKey, storageAccountName, storageContainerName, artifactKey, artifactPath)
+  }).then((blobUrl) => {
+    return deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName, storageAccountName, storageContainerName, templateDir, igniteConfig, deploymentContainerExecRoleId, blobUrl);
+  }).then(deployResult => {
+    return deployResult;
+  }).catch(error => {
+    throw new Error(`got error whilst deploying azure bootstrap: ${util.inspect(error, { depth: null })}`);
+  })
+}
+
+function deployInitialTemplate(resourceClient, resourceGroupName, instanceName, location, storageAccountName, storageContainerName, templateDir) {
+  const initialDeploymentName = `${instanceName}Initial`
+      , initialTemplate = path.join(templateDir, "base.json")
+      , initialTemplateParameters = {
+          "storageAccountName": {
+            "value": storageAccountName
+          },
+          "containerName": {
+            "value": storageContainerName
+          },
+          "location": {
+            "value": location
+          }
       }
-    }
-    , bootstrapTemplateParameters = {
+  
+  return deployResourceGroupTemplate(resourceClient, resourceGroupName, initialDeploymentName, initialTemplate, initialTemplateParameters);
+}
+
+function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName, storageAccountName, storageContainerName, templateDir, igniteConfig, deploymentContainerExecRoleId, blobUrl) {
+  
+  const bootstrapTemplate = path.join(templateDir, "bootstrap.json")
+      , bootstrapDeploymentName = `${instanceName}Bootstrap`
+      , bootstrapTemplateParameters = {
       "storageAccountName": {
         "value": storageAccountName + "f"
       },
@@ -47,36 +93,70 @@ module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) =
       },
       "GitHookSecret": {
         "value": igniteConfig.gitHookSecret
+      },
+      "deploymentContainerExecRoleId": {
+        "value": deploymentContainerExecRoleId
+      },
+      "blobUrl": {
+        "value": blobUrl
       }
     }
-    ;
+  
+  
+  return deployResourceGroupTemplate(resourceClient, resourceGroupName, bootstrapDeploymentName, bootstrapTemplate, bootstrapTemplateParameters);
+}
 
-  let resourceClient;
-  let storageClient;
-  let artifactPath;
+function createDeploymentContainerExecRole(restClient, location, templateDir) { // subscription, containerGroups/write (store id in env) attach to deploy function app
+  console.log("creating deployment container exec role...");
 
-  return azureUtils.interactiveLogin().then(credentials => {
-    resourceClient = new ResourceManagementClient(credentials, subscriptionId);
-    storageClient = Azure.createStorageManagementClient(credentials, subscriptionId);
+  const templateFile = path.join(templateDir, "deployExecRole.json");
 
-    return createResourceGroup(resourceClient, resourceGroupName, location);
-  }).then(() => {
-    return loadTemplateAndDeploy(resourceClient, resourceGroupName, initialDeploymentName, initialTemplate, initialTemplateParameters);
-  }).then(() => {
-    return buildFunctions(functionsDir, resourceGroupName);
-  }).then((artifact) => {
-    artifactPath = artifact;
-    return getStorageKey(storageClient, resourceGroupName, storageAccountName);
-  }).then((storageKey) => {
-    return upload(storageKey, storageAccountName, storageContainerName, artifactKey, artifactPath)
-  }).then((blobUrl) => {
-    bootstrapTemplateParameters.blobUrl = {"value":blobUrl};
-    return loadTemplateAndDeploy(resourceClient, resourceGroupName, bootstrapDeploymentName, bootstrapTemplate, bootstrapTemplateParameters);
-  }).then(deployResult => {
-    return deployResult;
-  }).catch(error => {
-    throw new Error(`got error whilst deploying azure bootstrap: ${error}`);
-  })
+  return deploySubscriptionTemplate(restClient, location, "FurnaceDeploymentContainerExecRole", templateFile, {}); 
+}
+
+function createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir) { // resource group
+  console.log("creating deployment user identity...");
+
+  const deploymentName = "DeploymentUserIdentity"
+      , templateFile = path.join(templateDir, "userAssignedIdentity.json")
+      , parameters = {
+        "resourceName": {
+          "value": "FurnaceDeployUserIdentity"
+        }
+      }
+
+  return deployResourceGroupTemplate(resourceClient, resourceGroupName, deploymentName, templateFile, parameters); 
+}
+
+function assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId) { // subscription, contributor role
+  const templateFile = path.join(templateDir, "assignRoleToDeploymentUserIdentity.json")
+  , parameters = {
+    "principalId": {
+      "value": principalId
+    }
+  }
+
+  return deploySubscriptionTemplate(restClient, location, "DeploymentRoleAssignment", templateFile, parameters); 
+}
+
+function deploySubscriptionTemplate(restClient, location, deploymentName, templateFile, parameters) {
+  const url = `/providers/Microsoft.Resources/deployments/${deploymentName}?api-version=2018-05-01`
+      , template = JSON.parse(fsUtils.readFile(templateFile))
+      , data = {
+        location,
+          properties: {
+            mode: "Incremental",
+            template,
+            parameters
+          }
+        }
+      ; 
+
+  return restClient({
+    method: "put",
+    url,
+    data
+  }).then(response => response.data);
 }
 
 function getStorageKey(storageClient, resourceGroupName, storageAccountName) {
@@ -219,7 +299,7 @@ function createResourceGroup(resourceClient, resourceGroupName, location) {
   })
 }
 
-function loadTemplateAndDeploy(resourceClient, resourceGroupName, deploymentName, templateFile, parameters) {
+function deployResourceGroupTemplate(resourceClient, resourceGroupName, deploymentName, templateFile, parameters) {
   return new Promise((resolve, reject) => {
     let template;
     try {
