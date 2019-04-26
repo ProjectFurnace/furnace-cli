@@ -10,13 +10,14 @@ const Azure = require('azure')
     , util = require("util")
     ;
 
-module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) => {
+module.exports.ignite = config => {
 
-  const { templateDir, functionsDir } = igniteConfig;
-  const resourceGroupName = `${instanceName}rg`
-      , storageAccountName = `${instanceName}sa`
-      , storageContainerName = `${instanceName}c`
-      , artifactKey = "bootstrapFunctions.zip"
+  const { name, location, subscriptionId, templateDir, functionsDir } = config;
+  const resourceGroupName = `${name}rg`
+      , bootstrapStorageAccountName = `${name}bootstrap`
+      , bootstrapStorageContainerName = `${name}bootstrapc`
+      , artifactsStorageAccountName = `${name}artifacts`
+      , artifactsStorageContainerName = `${name}artifactsc`
       ;
 
   let resourceClient, storageClient, artifactPath, restClient, deploymentContainerExecRoleId;
@@ -39,18 +40,21 @@ module.exports.ignite = (instanceName, location, subscriptionId, igniteConfig) =
     const principalId = createDeploymentUserIdentityResult.properties.outputs.principalId.value;
     return assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId);
   }).then(() => {
-    return deployInitialTemplate(resourceClient, resourceGroupName, instanceName, location, storageAccountName, storageContainerName, templateDir);
+    return deployInitialTemplate(resourceClient, resourceGroupName, name, location, bootstrapStorageAccountName, bootstrapStorageContainerName, templateDir);
   }).then(() => {
     return buildFunctions(functionsDir, resourceGroupName);
   }).then((artifact) => {
     artifactPath = artifact;
-    return getStorageKey(storageClient, resourceGroupName, storageAccountName);
+    return getStorageKey(storageClient, resourceGroupName, bootstrapStorageAccountName);
   }).then((storageKey) => {
-    return upload(storageKey, storageAccountName, storageContainerName, artifactKey, artifactPath)
+    return upload(storageKey, bootstrapStorageAccountName, bootstrapStorageContainerName, artifactPath)
   }).then((blobUrl) => {
-    return deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName, storageAccountName, storageContainerName, templateDir, igniteConfig, deploymentContainerExecRoleId, blobUrl);
+    return deployBootstrapTemplate(resourceClient, resourceGroupName, name, artifactsStorageAccountName, artifactsStorageContainerName, templateDir, config, deploymentContainerExecRoleId, blobUrl);
   }).then(deployResult => {
-    return deployResult;
+    // return here any values that should be stored in the local context
+    return Promise.resolve({
+      artifactBucketConnectionString: deployResult.properties.outputs.connectionString.value
+    })
   }).catch(error => {
     throw new Error(`got error whilst deploying azure bootstrap: ${util.inspect(error, { depth: null })}`);
   })
@@ -80,10 +84,10 @@ function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName
       , bootstrapDeploymentName = `${instanceName}Bootstrap`
       , bootstrapTemplateParameters = {
       "storageAccountName": {
-        "value": storageAccountName + "f"
+        "value": storageAccountName
       },
       "containerName": {
-        "value": storageContainerName + "f"
+        "value": storageContainerName
       },
       "ApiKey": {
         "value": igniteConfig.apiKey
@@ -102,11 +106,10 @@ function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName
       }
     }
   
-  
   return deployResourceGroupTemplate(resourceClient, resourceGroupName, bootstrapDeploymentName, bootstrapTemplate, bootstrapTemplateParameters);
 }
 
-function createDeploymentContainerExecRole(restClient, location, templateDir) { // subscription, containerGroups/write (store id in env) attach to deploy function app
+function createDeploymentContainerExecRole(restClient, location, templateDir) {
   console.log("creating deployment container exec role...");
 
   const templateFile = path.join(templateDir, "deployExecRole.json");
@@ -114,7 +117,7 @@ function createDeploymentContainerExecRole(restClient, location, templateDir) { 
   return deploySubscriptionTemplate(restClient, location, "FurnaceDeploymentContainerExecRole", templateFile, {}); 
 }
 
-function createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir) { // resource group
+function createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir) {
   console.log("creating deployment user identity...");
 
   const deploymentName = "DeploymentUserIdentity"
@@ -128,7 +131,7 @@ function createDeploymentUserIdentity(resourceClient, resourceGroupName, templat
   return deployResourceGroupTemplate(resourceClient, resourceGroupName, deploymentName, templateFile, parameters); 
 }
 
-function assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId) { // subscription, contributor role
+function assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId) {
   const templateFile = path.join(templateDir, "assignRoleToDeploymentUserIdentity.json")
   , parameters = {
     "principalId": {
@@ -244,8 +247,9 @@ function buildFunctions(functionsDir, resourceGroupName) {
 `
       );
 
-      return execPromise("npm install --production", { cwd: path.join(tempDir, 'deploy-trigger/'), env: process.env }).then(() => {
-        return execPromise("npm install --production", { cwd: path.join(tempDir, 'deploy-exec/'), env: process.env })
+        return execPromise("npm install --production", { cwd: path.join(tempDir, "deploy-trigger"), env: process.env
+      }).then(() => {
+        return execPromise("npm install --production", { cwd: path.join(tempDir, "deploy-exec"), env: process.env })
       }).then(() => {
         return execPromise("func extensions install", { cwd: tempDir, env: process.env});
       }).then(() => {
@@ -322,12 +326,14 @@ function deployResourceGroupTemplate(resourceClient, resourceGroupName, deployme
   })
 }
 
-function upload(storageKey, storageAccountName, storageContainerName, key, artifactPath) {
+function upload(storageKey, storageAccountName, storageContainerName, artifactPath) {
   return new Promise((resolve, reject) => {
-    const connectionString = `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`;
-    const blobService = azureStorage.createBlobService(connectionString);
+    const artifactKey = "bootstrapFunctions.zip"
+        , connectionString = `DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageKey};EndpointSuffix=core.windows.net`
+        , blobService = azureStorage.createBlobService(connectionString)
+        ;
 
-    blobService.createBlockBlobFromLocalFile(storageContainerName, key, artifactPath, (error, result) => {
+    blobService.createBlockBlobFromLocalFile(storageContainerName, artifactKey, artifactPath, (error, result) => {
       if (error) reject(error);
       else {
         var startDate = new Date();
@@ -343,8 +349,8 @@ function upload(storageKey, storageAccountName, storageContainerName, key, artif
           }
         };
 
-        var token = blobService.generateSharedAccessSignature(storageContainerName, key, sharedAccessPolicy);
-        var sasUrl = blobService.getUrl(storageContainerName, key, token);
+        var token = blobService.generateSharedAccessSignature(storageContainerName, artifactKey, sharedAccessPolicy);
+        var sasUrl = blobService.getUrl(storageContainerName, artifactKey, token);
         resolve(sasUrl);
       }
     });
