@@ -145,8 +145,8 @@ module.exports = async () => {
   }
 
   const finalConfig = Object.assign({}, config, deployResult)
-  console.log("finalConfig", finalConfig);
-    // completeIgnite(name, finalConfig);
+  //console.log("finalConfig", finalConfig);
+  //completeIgnite(name, finalConfig);
 }
 
 async function initialiseIgnite(config) {

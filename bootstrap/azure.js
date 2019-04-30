@@ -53,7 +53,8 @@ module.exports.ignite = config => {
   }).then(deployResult => {
     // return here any values that should be stored in the local context
     return Promise.resolve({
-      artifactBucketConnectionString: deployResult.properties.outputs.connectionString.value
+      artifactBucketConnectionString: deployResult.properties.outputs.connectionString.value,
+      apiUrl: deployResult.properties.outputs.apiUrl.value
     })
   }).catch(error => {
     throw new Error(`got error whilst deploying azure bootstrap: ${util.inspect(error, { depth: null })}`);
