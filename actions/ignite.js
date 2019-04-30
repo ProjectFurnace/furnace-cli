@@ -143,8 +143,8 @@ module.exports = async () => {
     default:
       throw new Error(`platform ${config.platform} is not currently supported`);
   }
-
-  completeIgnite(name, Object.assign({}, config, deployResult));
+  
+  completeIgnite(config.name, Object.assign({}, config, deployResult));
 }
 
 async function initialiseIgnite(config) {
