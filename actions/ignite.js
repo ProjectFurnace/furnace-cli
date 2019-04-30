@@ -144,9 +144,7 @@ module.exports = async () => {
       throw new Error(`platform ${config.platform} is not currently supported`);
   }
 
-  const finalConfig = Object.assign({}, config, deployResult)
-  //console.log("finalConfig", finalConfig);
-  //completeIgnite(name, finalConfig);
+  completeIgnite(name, Object.assign({}, config, deployResult));
 }
 
 async function initialiseIgnite(config) {
@@ -215,7 +213,7 @@ async function initialiseIgnite(config) {
   };
 }
 
-function completeIgnite(name, generatedConfig, answers) {
+function completeIgnite(name, generatedConfig) {
   const config = workspace.getConfig();
   config[name] = generatedConfig;
 
@@ -225,7 +223,7 @@ function completeIgnite(name, generatedConfig, answers) {
 
   saveIgniteStatus({
     state: "complete",
-    answers
+    generatedConfig
   })
 
   console.log(`furnace instance now complete.\nto create a new stack, please run:`);
