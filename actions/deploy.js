@@ -1,12 +1,12 @@
 const which = require("which")
-    , gitUtils = require("@project-furnace/gitutils")
-    , fsUtils = require("@project-furnace/fsutils")
-    , workspace = require("../utils/workspace")
-    , awsUtil = require("../utils/aws")
-    , path = require("path")
-    , yaml = require('yamljs')
-    , { spawn } = require('child_process')
-    ;
+  , gitUtils = require("@project-furnace/gitutils")
+  , fsUtils = require("@project-furnace/fsutils")
+  , workspace = require("../utils/workspace")
+  , awsUtil = require("../utils/aws")
+  , path = require("path")
+  , yaml = require('yamljs')
+  , { spawn } = require('child_process')
+  ;
 
 module.exports = async (argv) => {
   const workspaceDir = workspace.getWorkspaceDir()
@@ -18,6 +18,40 @@ module.exports = async (argv) => {
       , stackPath = argv._.length > 1 ? argv._[1] : process.cwd()
       , stackFilePath = path.join(stackPath, "stack.yaml")
       ;
+
+  const credentials = awsUtil.getCredentials(context.awsProfile);
+    if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
+      console.error(`unable to get credentials for aws profile ${context.awsProfile}`);
+      return;
+    }
+
+  const execProcess = (cmd, throwError = true) => {
+    return new Promise((resolve, reject) => {
+      const child = spawn(cmd, {
+        stdio: 'inherit',
+        shell: true,
+        cwd: deployDir,
+        env: {
+          FURNACE_LOCAL: "true",
+          REPO_DIR: stackPath,
+          TEMPLATE_REPO_DIR: functionTemplatesDir,
+          PLATFORM: "aws",
+          PATH: process.env.PATH,
+          AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
+          AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
+          BUILD_BUCKET: context.artifactBucket
+        },
+      });
+
+      child.on('close', (code) => {
+        if (code !== 0 && throwError) {
+          reject();
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
 
   if (!context) {
     console.error("unable to load current furnace context, ignite a furnace instance or import a context from file.");
@@ -67,14 +101,6 @@ module.exports = async (argv) => {
     return;
   }
 
-  const credentials = awsUtil.getCredentials(context.awsProfile);
-  if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
-    console.error(`unable to get credentials for aws profile ${context.awsProfile}`);
-    return;
-  }
-
-  
-
   const stackName = `${stackDef.name}-sandbox`;
 
   await execProcess(`pulumi stack init ${stackName}`, false);
@@ -83,30 +109,3 @@ module.exports = async (argv) => {
   await execProcess(`pulumi up`, false);
 }
 
-function execProcess(cmd, throwError = true) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, {
-      stdio: 'inherit',
-      shell: true,
-      cwd: deployDir,
-      env: {
-        FURNACE_LOCAL: "true",
-        REPO_DIR: stackPath,
-        TEMPLATE_REPO_DIR: functionTemplatesDir,
-        PLATFORM: "aws",
-        PATH: process.env.PATH,
-        AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
-        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
-        BUILD_BUCKET: context.artifactBucket
-      },
-    });
-
-    child.on('close', (code) => {
-      if (code !== 0 && throwError) {
-        reject();
-      } else {
-        resolve();
-      }
-    });
-  });
-}
