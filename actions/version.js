@@ -6,8 +6,7 @@ const getPackageVersion = require("get-pkg-version")
     ;
 
 module.exports = async () => {
-
-
+  
   try {
     const version = await getPackageVersion("@project-furnace/furnace-cli");
     console.log(version);
