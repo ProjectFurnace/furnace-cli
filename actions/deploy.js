@@ -73,33 +73,7 @@ module.exports = async (argv) => {
     return;
   }
 
-  const execProcess = (cmd, throwError = true) => {
-    return new Promise((resolve, reject) => {
-      const child = spawn(cmd, {
-        stdio: 'inherit',
-        shell: true,
-        cwd: deployDir,
-        env: {
-          FURNACE_LOCAL: "true",
-          REPO_DIR: stackPath,
-          TEMPLATE_REPO_DIR: functionTemplatesDir,
-          PLATFORM: "aws",
-          PATH: process.env.PATH,
-          AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
-          AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
-          BUILD_BUCKET: context.artifactBucket
-        },
-      });
-
-      child.on('close', (code) => {
-        if (code !== 0 && throwError) {
-          reject();
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
+  
 
   const stackName = `${stackDef.name}-sandbox`;
 
@@ -109,3 +83,30 @@ module.exports = async (argv) => {
   await execProcess(`pulumi up`, false);
 }
 
+function execProcess(cmd, throwError = true) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, {
+      stdio: 'inherit',
+      shell: true,
+      cwd: deployDir,
+      env: {
+        FURNACE_LOCAL: "true",
+        REPO_DIR: stackPath,
+        TEMPLATE_REPO_DIR: functionTemplatesDir,
+        PLATFORM: "aws",
+        PATH: process.env.PATH,
+        AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
+        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
+        BUILD_BUCKET: context.artifactBucket
+      },
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0 && throwError) {
+        reject();
+      } else {
+        resolve();
+      }
+    });
+  });
+}
