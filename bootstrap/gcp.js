@@ -16,8 +16,6 @@ const COMPLETE_STATES = SUCCESS_STATES.concat(FAILURE_STATES);
 
 module.exports.ignite = config => {
 
-  //const { name, templateDir, projectId, location, bootstrapBucket, artifactBucket } = config;
-
   let deploymentManager;
 
   return gcpUtils.login().then(async auth => {
@@ -33,18 +31,20 @@ module.exports.ignite = config => {
       const artifactBits = config.artifactBucket.split("-");
       config.rand = artifactBits[artifactBits.length - 1];
 
-      //return createDeployment(deploymentManager, name, templateDir, projectId, location);
       return createDeployment(deploymentManager, config);
-    }).then(result => {
+    }).then(async result => {
       process.stdout.write('waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea..');
 
-      startTimer(() => {
-        const filter = {
-          project: config.projectId,
-          deployment: `${config.name}-initial`
-        };
+      let pending = true;
+      let retVal = {};
+      
+      const filter = {
+        project: config.projectId,
+        deployment: `${config.name}-initial`
+      };
 
-        return deploymentManager.deployments.get(filter).then(async response => {
+      while(pending) {
+        await deploymentManager.deployments.get(filter).then(async response => {
           let op = response.data.operation;
           process.stdout.write('.');
           if (COMPLETE_STATES.includes(op.status)) {
@@ -55,20 +55,27 @@ module.exports.ignite = config => {
               const manifestBits = response.data.manifest.split('/');
               filter.manifest = manifestBits[manifestBits.length - 1];
 
-              return processOutputsAndSecrets(deploymentManager, config, filter);
+              pending = false;
+
+              retVal = await processOutputsAndSecrets(deploymentManager, config, filter);
             }
-            return false; // stop
+          } else {
+            await timeout(4000);
           }
-          return true; // continue
-        }).catch(err => {
-          //TODO detect and ignore temporary failures
-          throw new Error(`unable to bootstrap platform: ${err}`);
-        })
-      }, timer, 5000);
+        });
+      }
+
+      retVal.apiKey = config.apiKey;
+      retVal.gitHookSecret = config.gitHookSecret;
+      retVal.artifactBucket = config.artifactBucket;
+      retVal.codeBucket = config.bootstrapBucket;
+
+      return retVal;
     }).catch(err => {
-      console.log(`error igniting GCP`, util.inspect(err, {
+      console.log(util.inspect(err, {
         depth: null
       }));
+      throw new Error(`error igniting GCP`);
     });
 }
 
@@ -78,7 +85,6 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
       const layout = yamljs.parse(response.data.layout);
 
       console.log('');
-      //console.log("Deployment completed with status", op.status);
       return layout.outputs;
     } else {
       throw new Error('deployment failed');
@@ -127,20 +133,9 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
   });
 }
 
-const startTimer = (func, timer, period) => {
-  let caller = () => {
-    func().then(repeat => {
-      if (repeat) {
-        timer.handle = setTimeout(caller, period);
-      }
-    });
-  };
-  timer.handle = setTimeout(caller, period);
-};
-
-let timer = {
-  handle: null
-};
+function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function buildAndUploadFunctions(functionsDir, bucket) {
   //const functionsDir = path.join(templateDir, "functions")

@@ -143,7 +143,7 @@ module.exports.ignite = async config => {
       awsProfile: profile ? profile : null,
     }
 
-    completeIgnite(name, config, answers);
+    return config;
 
   } catch (err) {
     // the stack creation timed out
