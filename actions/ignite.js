@@ -71,6 +71,10 @@ module.exports = async () => {
     const options = commandLineArgs(platormDefinitions, { argv });
     passedOptions = Object.assign({}, mainOptions, options);
 
+    if (passedOptions._unknown) {
+      delete passedOptions._unknown;
+    }
+
     questions = [];
 
     if (passedOptions.name) config = passedOptions;
