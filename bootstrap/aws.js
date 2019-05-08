@@ -2,13 +2,13 @@ const AWS = require("aws-sdk")
     , which = require("which")
     , ziputils = require("@project-furnace/ziputils")
     , s3utils = require("@project-furnace/s3utils")
+    , fsutils = require("@project-furnace/fsutils")
     , awsUtil = require("../utils/aws")
+    , workspace = require("../utils/workspace")
+    , path = require("path")
     ;
 
-module.exports.ignite = async config => {
-
-  const { name, platform, gitToken, npmToken, gitProvider, storeGitHubToken } = config;
-
+module.exports.ignite = async (config, resume) => {
   const profiles = awsUtil.getProfiles()
     , awsCli = which.sync("aws", { nothrow: true })
     , requireCredentials = !awsCli || profiles.length === 0
@@ -16,37 +16,37 @@ module.exports.ignite = async config => {
 
   if (!awsCli) console.log(chalk.red("warning: no AWS CLI installed"))
 
-  const { profile, region, accessKeyId, secretAccessKey } = awsAnswers;
+  //const { profile, region, accessKeyId, secretAccessKey } = awsAnswers;
 
-  if (requireCredentials && (!accessKeyId || !secretAccessKey)) throw new Error(`AWS Access Key and Secret Access Key must be defined`);
-  if (!region) throw new Error(`aws region must be defined`);
+  if (requireCredentials && (!config.accessKeyId || !config.secretAccessKey)) throw new Error(`AWS Access Key and Secret Access Key must be defined`);
+  if (!config.location) throw new Error(`aws region must be defined`);
 
-  const templateFile = path.join(templateDir, "template", "furnaceIgnite.template");
+  const templateFile = path.join(config.templateDir, "furnaceIgnite.template");
 
-  AWS.config.region = region;
+  AWS.config.region = config.location;
 
   if (requireCredentials) {
     if (!AWS.config.credentials) AWS.config.credentials = {};
 
-    AWS.config.credentials.accessKeyId = accessKeyId;
-    AWS.config.credentials.secretAccessKey = secretAccessKey;
+    AWS.config.credentials.accessKeyId = config.accessKeyId;
+    AWS.config.credentials.secretAccessKey = config.secretAccessKey;
     // process.env.AWS_ACCESS_KEY_ID = accessKeyId;
     // process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
     s3utils.setCredentials(AWS.config.credentials);
-  } else if (profile !== "default") {
-    AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile });
+  } else if (config.profile !== "default") {
+    AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: config.profile });
     s3utils.setCredentials(AWS.config.credentials);
   }
 
-  const bucketExists = await s3utils.bucketExists(bootstrapBucket);
+  const bucketExists = await s3utils.bucketExists(config.bootstrapBucket);
   if (!bucketExists) {
     console.log("creating bootstrap bucket...");
-    await s3utils.createBucket(bootstrapBucket, region);
+    await s3utils.createBucket(config.bootstrapBucket, config.location);
   }
 
   // build bootstrap functions
   try {
-    await buildAndUploadFunctions(templateDir, bootstrapBucket)
+    await buildAndUploadFunctions(config.functionsDir, config.bootstrapBucket)
   } catch (err) {
     throw new Error(`unable to build bootstrap functions: ${err}`)
   }
@@ -54,18 +54,18 @@ module.exports.ignite = async config => {
   const cloudformation = new AWS.CloudFormation({ apiVersion: '2010-05-15' });
 
   const stackParams = {
-    StackName: name,
+    StackName: config.name,
     //OnFailure: 'DELETE',
     Capabilities: ["CAPABILITY_NAMED_IAM"],
     TemplateBody: fsutils.readFile(templateFile),
     Parameters: [
       {
         ParameterKey: 'ArtifactBucketName',
-        ParameterValue: artifactBucket,
+        ParameterValue: config.artifactBucket,
       },
       {
         ParameterKey: 'BootstrapCodeBucketName',
-        ParameterValue: bootstrapBucket,
+        ParameterValue: config.bootstrapBucket,
       },
       {
         ParameterKey: 'GitUsername',
@@ -73,19 +73,19 @@ module.exports.ignite = async config => {
       },
       {
         ParameterKey: 'GitToken',
-        ParameterValue: gitToken,
+        ParameterValue: config.gitToken,
       },
       {
         ParameterKey: 'NpmToken',
-        ParameterValue: npmToken,
+        ParameterValue: config.npmToken,
       },
       {
         ParameterKey: 'GitHookSecret',
-        ParameterValue: gitHookSecret,
+        ParameterValue: config.gitHookSecret,
       },
       {
         ParameterKey: 'ApiKey',
-        ParameterValue: apiKey,
+        ParameterValue: config.apiKey,
       },
     ]
   }
@@ -99,7 +99,7 @@ module.exports.ignite = async config => {
 
     for (let stack of stackList.StackSummaries) {
       // we need to check both the name and the status
-      if (stack.StackName === name && stack.StackStatus !== 'DELETE_COMPLETE') {
+      if (stack.StackName === config.name && stack.StackStatus !== 'DELETE_COMPLETE') {
         stackExists = true;
         break;
       }
@@ -110,7 +110,7 @@ module.exports.ignite = async config => {
     } else {
       saveIgniteStatus({
         state: "creating",
-        answers: Object.assign({}, answers, awsAnswers)
+        answers: Object.assign({}, config)
       });
 
       const createStackResponse = await cloudformation.createStack(stackParams).promise();
@@ -119,7 +119,7 @@ module.exports.ignite = async config => {
     console.log("waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea...")
 
     // TODO: allow waiting for stackUpdateComplete
-    const result = await cloudformation.waitFor('stackCreateComplete', { StackName: name }).promise();
+    const result = await cloudformation.waitFor('stackCreateComplete', { StackName: config.name }).promise();
     // const result = await cloudformation.waitFor('stackUpdateComplete', { StackName: name }).promise();
 
     for (let stack of result.Stacks) {
@@ -130,21 +130,20 @@ module.exports.ignite = async config => {
 
     if (!apiUrl) throw new Error(`unable to retrieve url from aws stack`);
 
-    const config = {
-      platform,
-      region,
-      artifactBucket,
-      codeBucket: bootstrapBucket,
-      gitToken: storeGitHubToken ? gitToken : null,
-      gitHookSecret: gitHookSecret,
+    const outputConfig = {
+      platform: config.platform,
+      region: config.location,
       apiUrl,
-      apiKey,
-      gitProvider,
-      awsProfile: profile ? profile : null,
+      artifactBucket: config.artifactBucket,
+      codeBucket: config.bootstrapBucket,
+      gitToken: config.storeGitHubToken ? config.gitToken : null,
+      gitHookSecret: config.gitHookSecret,
+      apiKey: config.apiKey,
+      gitProvider: config.gitProvider,
+      awsProfile: config.profile ? config.profile : null,
     }
 
-    return config;
-
+    return outputConfig;
   } catch (err) {
     // the stack creation timed out
     if (err.code && err.code === 'ResourceNotReady') {
@@ -162,13 +161,11 @@ module.exports.ignite = async config => {
   }
 }
 
-async function buildAndUploadFunctions(templateDir, bucket) {
-  const functionsDir = path.join(templateDir, "functions")
-    , functionsList = fsutils.listDirectory(functionsDir)
-    ;
+async function buildAndUploadFunctions(functionsDir, bucket) {
+  const functionsList = fsutils.listDirectory(functionsDir);
 
   for (let fn of functionsList) {
-    console.log(`building function ${fn}`);
+    console.log(`building function ${fn}...`);
     const functionDir = path.join(functionsDir, fn)
       , functionBuildDir = fsutils.createTempDirectory()
       , zipPath = path.join(functionBuildDir, `${fn}.zip`)
@@ -198,4 +195,14 @@ function execPromise(command, options) {
       resolve(stdout);
     });
   });
+}
+
+function saveIgniteStatus(state) {
+  const statusFilePath = getIgniteStatusPath();
+
+  fsutils.writeFile(statusFilePath, JSON.stringify(state));
+}
+
+function getIgniteStatusPath() {
+  return path.join(workspace.getWorkspaceDir(), "temp", `ignite-status.json`);
 }
