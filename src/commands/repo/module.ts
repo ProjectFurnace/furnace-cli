@@ -1,10 +1,10 @@
-export const command = 'module <subcommand>'
-export const desc = 'Manage module repos'
+export const command = 'module <subcommand>';
+export const desc = 'Manage module repos';
 
-export function builder (yargs: any) {
-  // 
+export function builder(yargs: any) {
+  //
 }
 
-export function handler (argv: any) {
-  // 
+export function handler(argv: any) {
+  //
 }

@@ -1,18 +1,18 @@
-import { Workspace } from '@project-furnace/sdk'
-import * as yargs from 'yargs'
+import { Workspace } from '@project-furnace/sdk';
+import * as yargs from 'yargs';
 
 (async () => {
-  Workspace.initialize()
+  Workspace.initialize();
   yargs
     .commandDir('commands')
     .demandCommand()
-    .argv
-})()
+    .argv;
+})();
 
-function commandFailed (message: any, error: any, yargs: any) {
+function commandFailed(message: any, error: any, yargs: any) {
   if (!error) {
-    console.error(yargs.help())
+    console.error(yargs.help());
   } else {
-    console.log(error)
+    console.log(error);
   }
 }
