@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "@project-furnace/fsutils": "^0.1.6",
+    "@project-furnace/sdk": "0.0.4",
     "get-pkg-version": "^1.1.4",
     "os": "^0.1.1",
     "path": "^0.12.7",

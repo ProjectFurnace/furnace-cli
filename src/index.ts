@@ -1,8 +1,8 @@
+import { Workspace } from '@project-furnace/sdk'
 import * as yargs from 'yargs'
-import * as workspace from './utils/workspace'
 
 (async () => {
-  workspace.initialize()
+  Workspace.initialize()
   yargs
     .commandDir('commands')
     .demandCommand()
