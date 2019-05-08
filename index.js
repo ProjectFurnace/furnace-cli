@@ -8,19 +8,5 @@ process.env.NODE_ENV = "production";
 (async () => {
   workspace.initialize();
     
-  program.commandDir('commands').completion().demandCommand().argv
+  program.completion().commandDir('commands').demandCommand().argv
 })();
-
-function commandFailed(msg, err, yargs) {
-  if( !err )
-    console.error(yargs.help());
-  else {
-    console.log(err);
-  }
-}
-
-
-
-
-
-

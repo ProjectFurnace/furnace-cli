@@ -10,6 +10,8 @@ const gitutils = require("@project-furnace/gitutils")
     , awsBootstrap = require("../bootstrap/aws")
     , azureBootstrap = require("../bootstrap/azure")
     , gcpBootstrap = require("../bootstrap/gcp")
+    , awsUtil = require("../utils/aws")
+    , which = require("which")
     ;
 
 module.exports = async () => {
@@ -30,7 +32,7 @@ module.exports = async () => {
     resume = resumeAnswers.resume;
 
     if (!resume) deleteIgniteStatus();
-    else initialisedConfig = status.config;
+    else initialisedConfig = status.answers;
   }
 
   if (!resume) {
@@ -46,29 +48,30 @@ module.exports = async () => {
     const mainOptions = commandLineArgs(mainDefinitions, { stopAtFirstUnknown: true });
     const argv = mainOptions._unknown || [];
 
-    let passedOptions = []
+    let passedOptions = [];
+    let platformDefinitions = [];
 
     switch (mainOptions.platform) {
       case "aws":
-        platormDefinitions = [
+        platformDefinitions = [
           { name: "profile", alias: "x", type: String, defaultValue: null },
           { name: "accessKeyId", alias: "a", type: String, defaultValue: null },
           { name: "secretAccessKey", alias: "p", type: String, defaultValue: null },
         ]
         break;
       case "azure":
-        platormDefinitions = [
+        platformDefinitions = [
           { name: "subscriptionId", alias: "s", type: String },
         ]
         break;
       case "gcp":
-        platormDefinitions = [
+        platformDefinitions = [
           { name: 'projectId', alias: 'j', type: String }
         ]
         break;
     }
 
-    const options = commandLineArgs(platormDefinitions, { argv });
+    const options = commandLineArgs(platformDefinitions, { argv });
     passedOptions = Object.assign({}, mainOptions, options);
 
     if (passedOptions._unknown) {
@@ -97,6 +100,10 @@ module.exports = async () => {
     // get platform specific properties
     switch (config.platform) {
       case "aws":
+        const profiles = awsUtil.getProfiles()
+        const awsCli = which.sync("aws", { nothrow: true });
+        const requireCredentials = !awsCli || profiles.length === 0;
+
         platformQuestions = [
           { type: 'list', name: 'profile', message: "AWS Profile:", choices: profiles, when: !requireCredentials },
           { type: 'input', name: 'accessKeyId', message: "AWS Access Key:", when: requireCredentials },
@@ -133,10 +140,10 @@ module.exports = async () => {
 
   let deployResult;
 
-  switch (config.platform) {
+  switch (initialisedConfig.platform) {
     case "aws":
       // await igniteAws(config, resume, status ? status.awsAnswers : null);
-      deployResult = await awsBootstrap.ignite(initialisedConfig);
+      deployResult = await awsBootstrap.ignite(initialisedConfig, resume);
       break;
     case "azure":
       deployResult = await azureBootstrap.ignite(initialisedConfig);
