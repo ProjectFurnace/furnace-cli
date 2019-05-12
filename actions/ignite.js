@@ -275,7 +275,7 @@ function getIgniteStatus() {
 function saveIgniteStatus(state) {
   const statusFilePath = getIgniteStatusPath();
 
-  fsutils.writeFile(statusFilePath, JSON.stringify(state));
+  fsutils.writeFile(statusFilePath, JSON.stringify(state, undefined, 2));
 }
 
 function deleteIgniteStatus() {
