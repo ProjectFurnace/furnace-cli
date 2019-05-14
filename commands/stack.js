@@ -1,8 +1,6 @@
-stack_actions = require("../actions/stack")
-
-exports.command = 'update-webhook'
-exports.desc = 'Update '
-exports.builder = {}
-exports.handler = async (argv) => {
-  await stack_actions.updateWebhook();
+exports.command = 'stack <subcommand>'
+exports.desc = 'Various stack operations'
+exports.builder = function (yargs) {
+  return yargs.commandDir('stack')
 }
+exports.handler = function (argv) {}
