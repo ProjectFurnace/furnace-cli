@@ -50,7 +50,7 @@ module.exports.saveConfig = (config) => {
 module.exports.getCurrentContext = () => {
     const config = module.exports.getConfig();
 
-    if (!config) return null;
+    if (!config || !config.current) return null;
 
     let context = config[config.current];
     context.name = config.current;
