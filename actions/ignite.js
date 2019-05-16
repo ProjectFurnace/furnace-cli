@@ -11,6 +11,8 @@ const gitutils = require("@project-furnace/gitutils")
     , azureBootstrap = require("../bootstrap/azure")
     , gcpBootstrap = require("../bootstrap/gcp")
     , awsUtil = require("../utils/aws")
+    , azureUtil = require("../utils/aws")
+    , gcpUtil = require("../utils/gcp")
     , which = require("which")
     ;
 
@@ -86,8 +88,8 @@ module.exports = async () => {
         { type: 'input', name: 'name', message: "Name this Furnace Instance:", default: "furnace", validate: validateInstanceName },
         { type: 'list', name: 'platform', message: "Platform:", choices: ["aws", "azure", "gcp"] },
         //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
-        { type: 'password', name: 'gitToken', message: "GitHub Access Token:", default: "", validate: input => !input ? "GitHub Access Token is Required" : true },
-        { type: 'password', name: 'npmToken', message: "NPM Access Token (enter to skip):", default: "" },
+        { type: 'password', name: 'gitToken', message: "GitHub Access Token:", default: "", mask: "*", validate: input => !input ? "GitHub Access Token is Required" : true },
+        { type: 'password', name: 'npmToken', message: "NPM Access Token (enter to skip):", default: "", mask: "*" },
         //{ type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
         { type: 'confirm', name: 'storeGitHubToken', message: "Store GitHub Token" } //, when: current => current.gitProvider === "github" }
       ];
@@ -107,22 +109,22 @@ module.exports = async () => {
         platformQuestions = [
           { type: 'list', name: 'profile', message: "AWS Profile:", choices: profiles, when: !requireCredentials },
           { type: 'input', name: 'accessKeyId', message: "AWS Access Key:", when: requireCredentials },
-          { type: 'password', name: 'secretAccessKey', message: "AWS Secret Access Key:", when: requireCredentials },
-          { type: 'input', name: 'location', message: "Region:", default: current => awsUtil.getDefaultRegion(current.profile) }
+          { type: 'password', name: 'secretAccessKey', message: "AWS Secret Access Key:", mask: "*", when: requireCredentials },
+          { type: 'list', name: 'location', message: "Region:", choices: awsUtil.getRegions(), default: current => awsUtil.getDefaultRegion(current.profile) }
         ]
         break;
 
       case "azure":
         platformQuestions = [
           { type: 'input', name: 'subscriptionId', message: "Azure Subscription Id:" },
-          { type: 'input', name: 'location', message: "Location:" } //, default: current => getDefaultRegion(current.profile) }
+          { type: 'list', name: 'location', message: "Location:", choices: azureUtil.getRegions() } //, default: current => getDefaultRegion(current.profile) }
         ];
         break;
 
       case "gcp":
         platformQuestions = [
           { type: 'input', name: 'projectId', message: "Google Cloud Project Id: " },
-          { type: 'input', name: 'location', message: "Location:" } //, default: current => getDefaultRegion(current.profile) }
+          { type: 'list', name: 'location', message: "Location:", choices: gcpUtil.getRegions() }, //, default: current => getDefaultRegion(current.profile) }
         ];
         break;
     }
