@@ -11,7 +11,7 @@ const gitutils = require("@project-furnace/gitutils")
     , azureBootstrap = require("../bootstrap/azure")
     , gcpBootstrap = require("../bootstrap/gcp")
     , awsUtil = require("../utils/aws")
-    , azureUtil = require("../utils/aws")
+    , azureUtil = require("../utils/azure")
     , gcpUtil = require("../utils/gcp")
     , which = require("which")
     ;
