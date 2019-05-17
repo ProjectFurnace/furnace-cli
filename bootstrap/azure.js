@@ -36,7 +36,7 @@ module.exports.ignite = config => {
     return createDeploymentContainerExecRole(restClient, location, name, templateDir);
   }).then((createDeploymentContainerExecRoleResult) => {
     deploymentContainerExecRoleId = createDeploymentContainerExecRoleResult.properties.parameters.roleDefName.value;
-    return createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir);
+    return createDeploymentUserIdentity(resourceClient, resourceGroupName, name, templateDir);
   }).then((createDeploymentUserIdentityResult) => {
     const principalId = createDeploymentUserIdentityResult.properties.outputs.principalId.value;
     return assignRoleToDeploymentUserIdentity(restClient, location, name, templateDir, principalId);
@@ -119,10 +119,10 @@ function createDeploymentContainerExecRole(restClient, location, instanceName, t
   return deploySubscriptionTemplate(restClient, location,  `${instanceName}FurnaceDeploymentContainerExecRole`, templateFile, {}); 
 }
 
-function createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir) {
+function createDeploymentUserIdentity(resourceClient, resourceGroupName, instanceName, templateDir) {
   console.log("creating deployment user identity...");
 
-  const deploymentName = "DeploymentUserIdentity"
+  const deploymentName = `${instanceName}DeploymentUserIdentity`
       , templateFile = path.join(templateDir, "userAssignedIdentity.json")
       , parameters = {
         "resourceName": {
