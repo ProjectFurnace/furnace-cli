@@ -13,10 +13,11 @@ const Azure = require('azure')
 module.exports.ignite = config => {
 
   const { name, location, subscriptionId, templateDir, functionsDir } = config;
+  const validAcccountName = name.replace(/-/g,'').replace(/_/g, '').toLowerCase().substr(0, 15);
   const resourceGroupName = `${name}rg`
-      , bootstrapStorageAccountName = `${name}bootstrap`
+      , bootstrapStorageAccountName = `${validAcccountName}bootstrap`
       , bootstrapStorageContainerName = `${name}bootstrapc`
-      , artifactsStorageAccountName = `${name}artifacts`
+      , artifactsStorageAccountName = `${validAcccountName}artifacts`
       , artifactsStorageContainerName = `${name}artifactsc`
       ;
 
@@ -257,6 +258,8 @@ function buildFunctions(functionsDir, resourceGroupName) {
         return zipUtils.compress(tempDir, uploadPackage);
       }).then(() => {
         return Promise.resolve(uploadPackage);
+      }).catch(error => {
+        throw new Error(`got error whilst deploying azure bootstrap: ${util.inspect(error, { depth: null })}`);
       })
 }
 
