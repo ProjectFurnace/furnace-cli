@@ -323,6 +323,10 @@ function deployResourceGroupTemplate(resourceClient, resourceGroupName, deployme
     };
 
     console.log(`commiting template for deployment ${deploymentName}...`);
+
+    if (deploymentName.includes('Bootstrap'))
+      console.log('waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea...')
+
     resourceClient.deployments.createOrUpdate(resourceGroupName, deploymentName, deploymentParameters, (err, result) => {
       if (err) reject(err);
       else (resolve(result));
