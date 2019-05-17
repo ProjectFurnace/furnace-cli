@@ -33,13 +33,13 @@ module.exports.ignite = config => {
 
     return createResourceGroup(resourceClient, resourceGroupName, location);
   }).then(() => {
-    return createDeploymentContainerExecRole(restClient, location, templateDir);
+    return createDeploymentContainerExecRole(restClient, location, name, templateDir);
   }).then((createDeploymentContainerExecRoleResult) => {
     deploymentContainerExecRoleId = createDeploymentContainerExecRoleResult.properties.parameters.roleDefName.value;
     return createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir);
   }).then((createDeploymentUserIdentityResult) => {
     const principalId = createDeploymentUserIdentityResult.properties.outputs.principalId.value;
-    return assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId);
+    return assignRoleToDeploymentUserIdentity(restClient, location, name, templateDir, principalId);
   }).then(() => {
     return deployInitialTemplate(resourceClient, resourceGroupName, name, location, bootstrapStorageAccountName, bootstrapStorageContainerName, templateDir);
   }).then(() => {
@@ -111,12 +111,12 @@ function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName
   return deployResourceGroupTemplate(resourceClient, resourceGroupName, bootstrapDeploymentName, bootstrapTemplate, bootstrapTemplateParameters);
 }
 
-function createDeploymentContainerExecRole(restClient, location, templateDir) {
+function createDeploymentContainerExecRole(restClient, location, instanceName, templateDir) {
   console.log("creating deployment container exec role...");
 
   const templateFile = path.join(templateDir, "deployExecRole.json");
 
-  return deploySubscriptionTemplate(restClient, location, "FurnaceDeploymentContainerExecRole", templateFile, {}); 
+  return deploySubscriptionTemplate(restClient, location,  `${instanceName}FurnaceDeploymentContainerExecRole`, templateFile, {}); 
 }
 
 function createDeploymentUserIdentity(resourceClient, resourceGroupName, templateDir) {
@@ -133,7 +133,7 @@ function createDeploymentUserIdentity(resourceClient, resourceGroupName, templat
   return deployResourceGroupTemplate(resourceClient, resourceGroupName, deploymentName, templateFile, parameters); 
 }
 
-function assignRoleToDeploymentUserIdentity(restClient, location, templateDir, principalId) {
+function assignRoleToDeploymentUserIdentity(restClient, location, instanceName, templateDir, principalId) {
   const templateFile = path.join(templateDir, "assignRoleToDeploymentUserIdentity.json")
   , parameters = {
     "principalId": {
@@ -141,7 +141,7 @@ function assignRoleToDeploymentUserIdentity(restClient, location, templateDir, p
     }
   }
 
-  return deploySubscriptionTemplate(restClient, location, "DeploymentRoleAssignment", templateFile, parameters); 
+  return deploySubscriptionTemplate(restClient, location, `${instanceName}DeploymentRoleAssignment`, templateFile, parameters); 
 }
 
 function deploySubscriptionTemplate(restClient, location, deploymentName, templateFile, parameters) {
