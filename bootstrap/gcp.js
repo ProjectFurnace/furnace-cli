@@ -125,6 +125,8 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
       returnValues[param.name] = param.finalValue;
     }
 
+    delete returnValues.rand;
+
     return returnValues;
   }).catch(err => {
     console.log(`error igniting GCP`, util.inspect(err, {
