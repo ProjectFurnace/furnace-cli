@@ -257,7 +257,9 @@ function buildFunctions(functionsDir, resourceGroupName) {
         return igniteUtil.execPromise("npm install --production", { cwd: path.join(tempDir, "deploy-exec"), env: process.env })
       }).then(() => {
         return igniteUtil.execPromise("func extensions install", { cwd: tempDir, env: process.env});
-      }).then(() => {
+      }).then((funcOutput) => {
+        if (funcOutput && funcOutput.startsWith('Extensions command requires dotnet on your path'))
+          throw new Error(funcOutput);
         return zipUtils.compress(tempDir, uploadPackage);
       }).then(() => {
         return Promise.resolve(uploadPackage);

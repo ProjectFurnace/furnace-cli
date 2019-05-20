@@ -38,7 +38,7 @@ module.exports.execPromise = (command, options) => {
         reject(error);
         return;
       }
-      resolve(stdout);
+      resolve(stdout + stderr);
     });
   });
 }
