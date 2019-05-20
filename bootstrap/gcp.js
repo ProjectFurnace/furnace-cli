@@ -1,6 +1,7 @@
 const gcpUtils = require("../utils/gcp"),
   path = require("path"),
   zipUtils = require("@project-furnace/ziputils"),
+  igniteUtil = require("../utils/ignite"),
   util = require("util"),
   {google} = require("googleapis"),
   fsutils = require("@project-furnace/fsutils"),
@@ -65,9 +66,6 @@ module.exports.ignite = config => {
         });
       }
 
-      retVal.apiKey = config.apiKey;
-      retVal.gitHookSecret = config.gitHookSecret;
-      retVal.artifactBucket = config.artifactBucket;
       retVal.codeBucket = config.bootstrapBucket;
 
       return retVal;
@@ -160,7 +158,7 @@ async function buildAndUploadFunctions(functionsDir, bucket) {
     functionBuildDir = path.join(functionBuildDir, '/', fn);
     fsutils.mkdir(functionBuildDir)
     fsutils.cp(functionDir, functionBuildDir);
-    const execResult = await execPromise("npm install --production", {
+    const execResult = await igniteUtil.execPromise("npm install --production", {
       cwd: functionBuildDir,
       env: process.env
     });
@@ -229,20 +227,6 @@ function createDeployment(deploymentManager, config) {
     deploymentManager.deployments.insert(request, function (err, response) {
       if (err) reject(err);
       else resolve(response);
-    });
-  });
-}
-
-function execPromise(command, options) {
-  const exec = require("child_process").exec;
-
-  return new Promise((resolve, reject) => {
-    exec(command, options, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(stdout);
     });
   });
 }

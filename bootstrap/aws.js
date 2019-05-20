@@ -4,7 +4,7 @@ const AWS = require("aws-sdk")
     , s3utils = require("@project-furnace/s3utils")
     , fsutils = require("@project-furnace/fsutils")
     , awsUtil = require("../utils/aws")
-    , workspace = require("../utils/workspace")
+    , igniteUtil = require("../utils/ignite")
     , path = require("path")
     ;
 
@@ -108,7 +108,7 @@ module.exports.ignite = async (config, resume) => {
     if (stackExists && !resume) {
       console.log("stack already exists, refreshing config...");
     } else {
-      saveIgniteStatus({
+      igniteUtil.saveIgniteStatus({
         state: "creating",
         answers: Object.assign({}, config)
       });
@@ -131,16 +131,7 @@ module.exports.ignite = async (config, resume) => {
     if (!apiUrl) throw new Error(`unable to retrieve url from aws stack`);
 
     const outputConfig = {
-      platform: config.platform,
-      region: config.location,
-      apiUrl,
-      artifactBucket: config.artifactBucket,
-      codeBucket: config.bootstrapBucket,
-      gitToken: config.storeGitHubToken ? config.gitToken : null,
-      gitHookSecret: config.gitHookSecret,
-      apiKey: config.apiKey,
-      gitProvider: config.gitProvider,
-      awsProfile: config.profile ? config.profile : null,
+      apiUrl
     }
 
     return outputConfig;
@@ -172,7 +163,7 @@ async function buildAndUploadFunctions(functionsDir, bucket) {
       ;
 
     fsutils.cp(functionDir, functionBuildDir);
-    const execResult = await execPromise("npm install --production", { cwd: functionBuildDir, env: process.env });
+    const execResult = await igniteUtil.execPromise("npm install --production", { cwd: functionBuildDir, env: process.env });
 
     if (execResult.stderr) {
       throw new Error(`npm install returned an error:\n${execResult.stdout}\n${execResult.stderr}`);
@@ -181,28 +172,4 @@ async function buildAndUploadFunctions(functionsDir, bucket) {
     await ziputils.compress(functionBuildDir, zipPath);
     await s3utils.upload(bucket, fn, zipPath);
   }
-}
-
-function execPromise(command, options) {
-  const exec = require("child_process").exec;
-
-  return new Promise((resolve, reject) => {
-    exec(command, options, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(stdout);
-    });
-  });
-}
-
-function saveIgniteStatus(state) {
-  const statusFilePath = getIgniteStatusPath();
-
-  fsutils.writeFile(statusFilePath, JSON.stringify(state));
-}
-
-function getIgniteStatusPath() {
-  return path.join(workspace.getWorkspaceDir(), "temp", `ignite-status.json`);
 }

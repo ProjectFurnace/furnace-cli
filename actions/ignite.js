@@ -13,12 +13,13 @@ const gitutils = require("@project-furnace/gitutils")
     , awsUtil = require("../utils/aws")
     , azureUtil = require("../utils/azure")
     , gcpUtil = require("../utils/gcp")
+    , igniteUtil = require("../utils/ignite")
     , which = require("which")
     ;
 
 module.exports = async () => {
 
-  let status = getIgniteStatus()
+  let status = igniteUtil.getIgniteStatus()
     , resume = false
     , initialisedConfig = {}
     ;
@@ -33,7 +34,7 @@ module.exports = async () => {
     const resumeAnswers = await inquirer.prompt(resultQuestions);
     resume = resumeAnswers.resume;
 
-    if (!resume) deleteIgniteStatus();
+    if (!resume) igniteUtil.deleteIgniteStatus();
     else initialisedConfig = status.answers;
   }
 
@@ -157,7 +158,7 @@ module.exports = async () => {
       throw new Error(`platform ${config.platform} is not currently supported`);
   }
   
-  completeIgnite(config.name, Object.assign({}, config, deployResult));
+  completeIgnite(initialisedConfig.name, Object.assign({}, initialisedConfig, deployResult));
 }
 
 async function initialiseIgnite(config) {
@@ -227,6 +228,20 @@ async function initialiseIgnite(config) {
 }
 
 function completeIgnite(name, generatedConfig) {
+  //remove non-required fields in the config
+  delete generatedConfig.bootstrapRemote;
+  delete generatedConfig.workspaceDir;
+  delete generatedConfig.bootstrapDir;
+  delete generatedConfig.templateDir;
+  delete generatedConfig.coreModulesRemote;
+  delete generatedConfig.coreModulesRepoDir;
+  delete generatedConfig.functionsDir;
+  delete generatedConfig.name;
+  delete generatedConfig.storeGitHubToken;
+  delete generatedConfig.bootstrapBucket;
+  if (generatedConfig.npmToken = '')
+    delete generatedConfig.npmToken;
+
   const config = workspace.getConfig();
   config[name] = generatedConfig;
 
@@ -234,7 +249,7 @@ function completeIgnite(name, generatedConfig) {
 
   workspace.saveConfig(config);
 
-  saveIgniteStatus({
+  igniteUtil.saveIgniteStatus({
     state: "complete",
     generatedConfig
   })
@@ -260,31 +275,4 @@ function validateInstanceName(value) {
     return true;
   }
   return 'Please enter a valid instance name. Maximum 8 chars [A-Za-z0-9-_] starting with a letter and ending with a letter or number';
-}
-
-function getIgniteStatus() {
-  let state = null;
-
-  const statusFilePath = getIgniteStatusPath();
-
-  if (fsutils.exists(statusFilePath)) {
-    state = JSON.parse(fsutils.readFile(statusFilePath));
-  }
-
-  return state;
-}
-
-function saveIgniteStatus(state) {
-  const statusFilePath = getIgniteStatusPath();
-
-  fsutils.writeFile(statusFilePath, JSON.stringify(state, undefined, 2));
-}
-
-function deleteIgniteStatus() {
-  const statusFilePath = getIgniteStatusPath();
-  if (fsutils.exists(statusFilePath)) fsutils.rimraf(statusFilePath);
-}
-
-function getIgniteStatusPath() {
-  return path.join(workspace.getWorkspaceDir(), "temp", `ignite-status.json`);
 }
