@@ -239,7 +239,7 @@ function completeIgnite(name, generatedConfig) {
   delete generatedConfig.name;
   delete generatedConfig.storeGitHubToken;
   delete generatedConfig.bootstrapBucket;
-  if (generatedConfig.npmToken = '')
+  if (generatedConfig.npmToken == '')
     delete generatedConfig.npmToken;
 
   const config = workspace.getConfig();
