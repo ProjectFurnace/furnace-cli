@@ -44,7 +44,7 @@ module.exports.getConfig = () => {
 
 module.exports.saveConfig = (config) => {
     const configFile = path.join(module.exports.getWorkspaceDir(), "config.json");
-    fsutils.writeFile(configFile, JSON.stringify(config));
+    fsutils.writeFile(configFile, JSON.stringify(config, undefined, 2));
 }
 
 module.exports.getCurrentContext = () => {
