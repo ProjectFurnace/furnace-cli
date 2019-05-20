@@ -124,7 +124,7 @@ module.exports = async () => {
 
       case "gcp":
         platformQuestions = [
-          { type: 'input', name: 'projectId', message: "Google Cloud Project Id: " },
+          { type: 'input', name: 'projectId', message: "Google Cloud Project Id:" },
           { type: 'list', name: 'location', message: "Location:", choices: gcpUtil.getRegions() }, //, default: current => getDefaultRegion(current.profile) }
         ];
         break;

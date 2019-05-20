@@ -8,8 +8,7 @@ const gcpUtils = require("../utils/gcp"),
   {Storage} = require('@google-cloud/storage'),
   process = require('process'),
   yamljs = require('yamljs'),
-  kms = require('@google-cloud/kms')
-
+  kms = require('@google-cloud/kms');
 
 const SUCCESS_STATES = ["SUCCESS", "DONE"];
 const FAILURE_STATES = ["FAILURE", "CANCELLED"];
@@ -20,66 +19,66 @@ module.exports.ignite = config => {
   let deploymentManager;
 
   return gcpUtils.login().then(async auth => {
-      deploymentManager = google.deploymentmanager({
-        version: "v2",
-        auth
-      });
-
-      await buildAndUploadFunctions(config.functionsDir, config.bootstrapBucket);
-    
-      config.secretsBucket = config.artifactBucket.replace("artifacts", "secrets");
-
-      const artifactBits = config.artifactBucket.split("-");
-      config.rand = artifactBits[artifactBits.length - 1];
-
-      return createDeployment(deploymentManager, config);
-    }).then(async result => {
-      process.stdout.write('waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea..');
-
-      let pending = true;
-      let retVal = {};
-      
-      const filter = {
-        project: config.projectId,
-        deployment: `${config.name}-initial`
-      };
-
-      while(pending) {
-        await deploymentManager.deployments.get(filter).then(async response => {
-          let op = response.data.operation;
-          process.stdout.write('.');
-          if (COMPLETE_STATES.includes(op.status)) {
-            if (op.error) {
-              console.log(op.error);
-              throw new Error(`unable to bootstrap platform: ${op.error}`)
-            } else {
-              const manifestBits = response.data.manifest.split('/');
-              filter.manifest = manifestBits[manifestBits.length - 1];
-
-              pending = false;
-
-              retVal = await processOutputsAndSecrets(deploymentManager, config, filter);
-            }
-          } else {
-            await timeout(4000);
-          }
-        });
-      }
-
-      retVal.codeBucket = config.bootstrapBucket;
-
-      return retVal;
-    }).catch(err => {
-      console.log(util.inspect(err, {
-        depth: null
-      }));
-      throw new Error(`error igniting GCP`);
+    deploymentManager = google.deploymentmanager({
+      version: "v2",
+      auth
     });
+
+    await buildAndUploadFunctions(config.functionsDir, config.bootstrapBucket);
+
+    config.secretsBucket = config.artifactBucket.replace("artifacts", "secrets");
+
+    const artifactBits = config.artifactBucket.split("-");
+    config.rand = artifactBits[artifactBits.length - 1];
+
+    return createDeployment(deploymentManager, config);
+  }).then(async result => {
+    process.stdout.write('waiting for bootstrap template to finish. this may take a few minutes, so feel free to grab a cup of tea..');
+
+    let pending = true;
+    let retVal = {};
+
+    const filter = {
+      project: config.projectId,
+      deployment: config.name
+    };
+
+    while (pending) {
+      await deploymentManager.deployments.get(filter).then(async response => {
+        let op = response.data.operation;
+        process.stdout.write('.');
+        if (COMPLETE_STATES.includes(op.status)) {
+          if (op.error) {
+            console.log(op.error);
+            throw new Error(`unable to bootstrap platform: ${op.error}`)
+          } else {
+            const manifestBits = response.data.manifest.split('/');
+            filter.manifest = manifestBits[manifestBits.length - 1];
+
+            pending = false;
+
+            retVal = await processOutputsAndSecrets(deploymentManager, config, filter);
+          }
+        } else {
+          await timeout(4000);
+        }
+      });
+    }
+
+    retVal.codeBucket = config.bootstrapBucket;
+
+    return retVal;
+  }).catch(err => {
+    console.log(util.inspect(err, {
+      depth: null
+    }));
+    throw new Error(`error igniting GCP`);
+  });
 }
 
 function processOutputsAndSecrets(deploymentManager, config, filter) {
   return deploymentManager.manifests.get(filter).then(response => {
-    if( response.data && response.data.layout ) {
+    if (response.data && response.data.layout) {
       const layout = yamljs.parse(response.data.layout);
 
       console.log('');
@@ -100,12 +99,15 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
       `${config.projectId}-${config.name}-secrets-key-${config.rand}`
     );
 
-    for( const secret of secrets ){
+    for (const secret of secrets) {
       const configSecretVar = secret.charAt(0).toLowerCase() + secret.slice(1);
-      if( config[configSecretVar] ) { 
+      if (config[configSecretVar]) {
         const b64secret = Buffer.from(config[configSecretVar]).toString('base64');
         // Encrypts the file using the specified crypto key
-        const [result] = await client.encrypt({name, plaintext: b64secret});
+        const [result] = await client.encrypt({
+          name,
+          plaintext: b64secret
+        });
 
         if (result.ciphertext) {
           const storage = new Storage();
@@ -119,10 +121,10 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
     }
 
     let returnValues = {}
-    for( const param of outputs ) {
+    for (const param of outputs) {
       returnValues[param.name] = param.finalValue;
     }
-    
+
     return returnValues;
   }).catch(err => {
     console.log(`error igniting GCP`, util.inspect(err, {
@@ -151,7 +153,7 @@ async function buildAndUploadFunctions(functionsDir, bucket) {
     console.log(`building function ${fn}`);
     let functionBuildDir = fsutils.createTempDirectory();
     const functionDir = path.join(functionsDir, fn),
-              zipPath = path.join(functionBuildDir, `${fn}.zip`);
+      zipPath = path.join(functionBuildDir, `${fn}.zip`);
 
     // fsutils.cp does not copy the whole folder so to avoid issues with 
     // zip packaged inside zip we need to put contents in a subfolder
@@ -211,7 +213,7 @@ function createDeployment(deploymentManager, config) {
     const request = {
       project: config.projectId,
       resource: {
-        name: `${config.name}-initial`,
+        name: config.name,
         target: {
           config: {
             content: definition
