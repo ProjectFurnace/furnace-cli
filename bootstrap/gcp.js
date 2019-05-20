@@ -96,8 +96,8 @@ function processOutputsAndSecrets(deploymentManager, config, filter) {
     const name = client.cryptoKeyPath(
       config.projectId,
       config.location,
-      `${config.projectId}-${config.name}-initial-secrets-key-ring-${config.rand}`,
-      `${config.projectId}-${config.name}-initial-secrets-key-${config.rand}`
+      `${config.projectId}-${config.name}-key-ring-${config.rand}`,
+      `${config.projectId}-${config.name}-secrets-key-${config.rand}`
     );
 
     for( const secret of secrets ){
