@@ -1,4 +1,4 @@
-const Azure = require('azure')
+const StorageManagementClient = require('azure-arm-storage').StorageManagementClient
     , azureUtils = require("../utils/azure")
     , fs = require("fs")
     , path = require("path")
@@ -25,7 +25,7 @@ module.exports.ignite = config => {
 
   return azureUtils.login().then(credentials => {
     resourceClient = new ResourceManagementClient(credentials, subscriptionId);
-    storageClient = Azure.createStorageManagementClient(credentials, subscriptionId);
+    storageClient = new StorageManagementClient(credentials, subscriptionId);
 
     const accessToken = credentials.tokenCache._entries[credentials.tokenCache._entries.length - 1].accessToken;
 
