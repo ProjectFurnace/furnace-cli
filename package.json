@@ -32,6 +32,7 @@
     "axios": "^0.18.0",
     "azure-arm-resource": "^7.3.0",
     "azure-arm-storage": "^8.1.0",
+    "azure-keyvault": "^3.0.4",
     "azure-storage": "^2.10.3",
     "chalk": "^2.4.1",
     "cli-table3": "^0.5.1",

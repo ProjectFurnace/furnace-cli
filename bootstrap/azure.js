@@ -1,5 +1,6 @@
 const StorageManagementClient = require('azure-arm-storage').StorageManagementClient
     , azureUtils = require("../utils/azure")
+    , KeyVault = require('azure-keyvault')
     , fs = require("fs")
     , path = require("path")
     , ResourceManagementClient = require("azure-arm-resource").ResourceManagementClient
@@ -21,13 +22,15 @@ module.exports.ignite = config => {
       , artifactsStorageContainerName = `${name}artifactsc`
       ;
 
-  let resourceClient, storageClient, artifactPath, restClient, deploymentContainerExecRoleId, principalId;
+  let resourceClient, deployResult, storageClient, artifactPath, restClient, deploymentContainerExecRoleId, principalId, oid;
 
   return azureUtils.login().then(credentials => {
     resourceClient = new ResourceManagementClient(credentials, subscriptionId);
     storageClient = new StorageManagementClient(credentials, subscriptionId);
+    keyvaultClient = new KeyVault.KeyVaultClient(credentials)
 
     const accessToken = credentials.tokenCache._entries[credentials.tokenCache._entries.length - 1].accessToken;
+    oid = credentials.tokenCache._entries[credentials.tokenCache._entries.length - 1].oid;
 
     restClient = azureUtils.getHttpClient(`https://management.azure.com/subscriptions/${subscriptionId}`, accessToken);
 
@@ -50,8 +53,12 @@ module.exports.ignite = config => {
   }).then((storageKey) => {
     return upload(storageKey, bootstrapStorageAccountName, bootstrapStorageContainerName, artifactPath)
   }).then((blobUrl) => {
-    return deployBootstrapTemplate(resourceClient, resourceGroupName, name, artifactsStorageAccountName, artifactsStorageContainerName, templateDir, config, deploymentContainerExecRoleId, principalId, blobUrl);
-  }).then(deployResult => {
+    return deployBootstrapTemplate(resourceClient, resourceGroupName, name, artifactsStorageAccountName, artifactsStorageContainerName, templateDir, config, deploymentContainerExecRoleId, principalId, oid, blobUrl);
+  }).then(deployResultOutput => {
+    deployResult = deployResultOutput;
+    // create the key for state encryption since we cannot do this on the ARM template. pitty.
+    return keyvaultClient.createKey(`https://${resourceGroupName}-vault.vault.azure.net/`, 'state', 'RSA');
+  }).then(() => {
     // return here any values that should be stored in the local context
     return Promise.resolve({
       artifactBucketConnectionString: deployResult.properties.outputs.connectionString.value,
@@ -80,7 +87,7 @@ function deployInitialTemplate(resourceClient, resourceGroupName, instanceName, 
   return deployResourceGroupTemplate(resourceClient, resourceGroupName, initialDeploymentName, initialTemplate, initialTemplateParameters);
 }
 
-function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName, storageAccountName, storageContainerName, templateDir, igniteConfig, deploymentContainerExecRoleId, principalId, blobUrl) {
+function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName, storageAccountName, storageContainerName, templateDir, igniteConfig, deploymentContainerExecRoleId, principalId, oid, blobUrl) {
   
   const bootstrapTemplate = path.join(templateDir, "bootstrap.json")
       , bootstrapDeploymentName = `${instanceName}Bootstrap`
@@ -105,6 +112,9 @@ function deployBootstrapTemplate(resourceClient, resourceGroupName, instanceName
       },
       "principalId": {
         "value": principalId
+      },
+      "oid": {
+        "value": oid
       },
       "blobUrl": {
         "value": blobUrl
