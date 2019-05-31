@@ -19,7 +19,12 @@ module.exports = async (argv) => {
       , stackFilePath = path.join(stackPath, "stack.yaml")
       ;
 
-  const credentials = awsUtil.getCredentials(context.awsProfile);
+  let awsProfile = "default";
+  
+  if (context && context.awsProfile) awsProfile = context.awsProfile;
+
+  const credentials = awsUtil.getCredentials(awsProfile);
+    
     if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
       console.error(`unable to get credentials for aws profile ${context.awsProfile}`);
       return;
