@@ -19,16 +19,7 @@ module.exports = async (argv) => {
       , stackFilePath = path.join(stackPath, "stack.yaml")
       ;
 
-  let awsProfile = "default";
-  
-  if (context && context.awsProfile) awsProfile = context.awsProfile;
-
-  const credentials = awsUtil.getCredentials(awsProfile);
-    
-    if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
-      console.error(`unable to get credentials for aws profile ${context.awsProfile}`);
-      return;
-    }
+  const platformEnv = getPlatformVariables(context);
 
   const execProcess = (cmd, throwError = true) => {
     return new Promise((resolve, reject) => {
@@ -37,13 +28,12 @@ module.exports = async (argv) => {
         shell: true,
         cwd: deployDir,
         env: {
+          ...platformEnv,
+          PLATFORM: context.platform,
           FURNACE_LOCAL: "true",
           REPO_DIR: stackPath,
           TEMPLATE_REPO_DIR: functionTemplatesDir,
-          PLATFORM: "aws",
           PATH: process.env.PATH,
-          AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
-          AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
           BUILD_BUCKET: context.artifactBucket,
           FURNACE_INSTANCE: context.name
         },
@@ -102,16 +92,61 @@ module.exports = async (argv) => {
     return;
   }
 
-  if (!context.awsProfile) {
-    console.error("context has no aws profile specified");
-    return;
-  }
-
   const stackName = `${stackDef.name}-sandbox`;
 
-  await execProcess(`pulumi stack init ${stackName}`, false);
-  await execProcess(`pulumi config set --plaintext aws:region ${context.region}`);
-  await execProcess(`pulumi stack select ${stackName}`);
-  await execProcess(`pulumi up`, false);
+  const commands = [
+    { command: `pulumi stack init ${stackName}`, errors: false }
+  ]
+
+  switch (context.platform) {
+    case "aws":
+      commands.push({ command: `pulumi config set --plaintext aws:region ${context.region}`, errors: true });
+      break;
+    case "azure":
+      commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });
+      commands.push({ command: `pulumi config set --plaintext azure:location ${context.location}`, errors: true })
+      break;
+    case "gcp":
+      commands.push({ command: `pulumi config set --plaintext gcp:project ${context.projectId}`, errors: true });
+      commands.push({ command: `pulumi config set --plaintext gcp:region ${context.location}`, errors: true });
+      break;
+  }
+
+  commands.push({ command: `pulumi stack select ${stackName}`, errors: true });
+  commands.push({ command: `pulumi up`, errors: false });
+
+  for (let command of commands) {
+    await execProcess(command.command, command.errors);
+  }
 }
 
+function getPlatformVariables(context) {
+
+  switch (context.platform) {
+    case "aws":
+      if (!context.awsProfile) throw new Error("context has no aws profile specified");
+
+      let awsProfile = context && context.awsProfile ? context.awsProfile : "default";
+      const credentials = awsUtil.getCredentials(awsProfile);
+      if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
+        throw new Error(`unable to get credentials for aws profile ${context.awsProfile}`);
+      }
+
+      return {
+        AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
+        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
+      };
+
+    case "azure":
+      return {
+        STACK_REGION: context.location,
+        STORAGE_CONNECTION_STRING: context.artifactBucketConnectionString
+      };
+
+    case "gcp":
+      return {
+        GCP_PROJECT: context.projectId,
+        GOOGLE_APPLICATION_CREDENTIALS: "/Users/danny/Downloads/furnace-scratch-4d7da774a0e8.json"
+      };
+  }
+}
