@@ -17,9 +17,9 @@ module.exports.ignite = config => {
   const validAcccountName = name.replace(/-/g,'').replace(/_/g, '').toLowerCase().substr(0, 15);
   const resourceGroupName = `${name}rg`
       , bootstrapStorageAccountName = `${validAcccountName}bootstrap`
-      , bootstrapStorageContainerName = `${name}bootstrapc`
+      , bootstrapStorageContainerName = config.bootstrapBucket
       , artifactsStorageAccountName = `${validAcccountName}artifacts`
-      , artifactsStorageContainerName = `${name}artifactsc`
+      , artifactsStorageContainerName = config.artifactBucket
       ;
 
   let resourceClient, deployResult, storageClient, artifactPath, restClient, deploymentContainerExecRoleId, principalId, oid;

@@ -104,7 +104,7 @@ module.exports = async (argv) => {
       break;
     case "azure":
       commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });
-      commands.push({ command: `pulumi config set --plaintext azure:location ${context.location}`, errors: true })
+      //commands.push({ command: `pulumi config set --plaintext azure:location ${context.location}`, errors: true })
       break;
     case "gcp":
       commands.push({ command: `pulumi config set --plaintext gcp:project ${context.projectId}`, errors: true });
