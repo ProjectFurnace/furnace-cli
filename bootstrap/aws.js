@@ -138,7 +138,7 @@ module.exports.ignite = async (config, resume) => {
   } catch (err) {
     // the stack creation timed out
     if (err.code && err.code === 'ResourceNotReady') {
-      const stackEventsPromise = await cloudformation.describeStackEvents({ StackName: name }).promise();
+      const stackEventsPromise = await cloudformation.describeStackEvents({ StackName: config.name }).promise();
 
       //loop through the events of stack creation to find the first one that failed
       const errorEvent = stackEventsPromise.StackEvents.reverse().find(elem => {
