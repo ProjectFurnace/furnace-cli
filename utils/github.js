@@ -1,5 +1,5 @@
 let octokit = require('@octokit/rest')({
-    userAgent: 'FurnaceCLI v1.0.4',
+    userAgent: 'FurnaceCLI v1.0.6',
     previews: ['machine-man-preview']
 });
 
@@ -19,7 +19,7 @@ getOwnerRepoFromUrl = (url) => {
 //TODO: Refactor this. It's far from elegant but Octokit was working in quite a different way before and this is a quick fix
 auth = token => {
     octokit = require('@octokit/rest')({
-        userAgent: 'FurnaceCLI v1.0.4',
+        userAgent: 'FurnaceCLI v1.0.6',
         previews: ['machine-man-preview'],
         auth: 'token ' + token
     });
