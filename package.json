@@ -1,7 +1,7 @@
 {
   "name": "@project-furnace/cli",
   "version": "0.1.0",
-  "description": "",
+  "description": "CLI for the Furnace streaming data processing framework",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
