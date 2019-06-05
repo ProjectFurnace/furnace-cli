@@ -21,7 +21,7 @@ module.exports.saveIgniteStatus = (state) => {
 }
 
 module.exports.deleteIgniteStatus = () => {
-  const statusFilePath = getIgniteStatusPath();
+  const statusFilePath = module.exports.getIgniteStatusPath();
   if (fsutils.exists(statusFilePath)) fsutils.rimraf(statusFilePath);
 }
 
