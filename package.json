@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/ProjectFurnace/furnace-cli#readme",
   "devDependencies": {
-    "jest": "^23.6.0"
+    "jest": "^24.8.0"
   },
   "dependencies": {
     "@google-cloud/kms": "^0.4.0",
@@ -29,7 +29,7 @@
     "@project-furnace/s3utils": "^0.1.6",
     "@project-furnace/ziputils": "^0.1.4",
     "aws-sdk": "^2.368.0",
-    "axios": "^0.18.0",
+    "axios": "^0.19.0",
     "azure-arm-resource": "^7.3.0",
     "azure-arm-storage": "^8.1.0",
     "azure-keyvault": "^3.0.4",
