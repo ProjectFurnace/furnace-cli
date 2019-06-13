@@ -64,11 +64,11 @@ module.exports.status = () => {
 
     const context = workspace.getCurrentContext();
 
-    const { name, platform, region, gitProvider, apiUrl } = context;
+    const { name, platform, location, gitProvider, apiUrl } = context;
 
     console.log(`Current Context: ${chalk.green(name)}`);
     console.log(`Platform: ${chalk.green(platform)}`);
-    console.log(`Region: ${chalk.green(region)}`);
+    console.log(`Region: ${chalk.green(location)}`);
     console.log(`Git Provider: ${chalk.green(gitProvider)}`);
     console.log(`API URL: ${chalk.green(apiUrl)}`)
     

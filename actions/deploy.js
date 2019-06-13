@@ -100,7 +100,7 @@ module.exports = async (argv) => {
 
   switch (context.platform) {
     case "aws":
-      commands.push({ command: `pulumi config set --plaintext aws:region ${context.region}`, errors: true });
+      commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });
       break;
     case "azure":
       commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });

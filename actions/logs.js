@@ -30,7 +30,7 @@ module.exports = async (env, name) => {
           follow: true,
           startTime
         }
-      , awsOpts = { region : context.region  }
+      , awsOpts = { region : context.location }
       ;
 
   const eventStream = new CWLogFilterEventStream(filterOpts,awsOpts);
