@@ -79,7 +79,7 @@ function getSecretFullName(environment, name) {
       , context = workspace.getCurrentContext()
       ;
 
-  return `/${context.name}/${stackName}/${name}/${environment}`;
+  return `/${context.name}/${stackName}/${environment}/${name}`;
 }
 
 function getSSM() {

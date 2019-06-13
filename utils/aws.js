@@ -57,7 +57,7 @@ module.exports.getInstance = () => {
   if (!context) throw new Error(`unable to get current context, check the furnace config file at ~/.furnace/config.json`);
 
   const profile = context.awsProfile
-    , region = context.region
+    , region = context.location
     ;
 
   if (profile) {
