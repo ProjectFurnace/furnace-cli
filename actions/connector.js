@@ -6,11 +6,22 @@ const workspace = require("../utils/workspace")
     , Table = require("cli-table3")
     , path = require("path")
     , util = require("util")
+    , fluentd = require("../utils/connectors/fluentd/fluentd")
     ;
 
-module.exports.add = async () => {
+module.exports.add = async (name) => {
 
-    console.log(chalk.green.bold("It's working"))
+   
+
+    const connectors = stack.getConfig("connectors");
+    const connector = connectors.find(c => c.name === name);
+    if(connector.type == "FluentConnector"){    
+        try {
+            fluentd.get_template(connector)
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
 }
 

@@ -1,0 +1,72 @@
+{% if system %}
+{% for system_item in system %}
+<system>
+{% for k, v in system_item %}
+{% if v is mapping %}
+  <{{ k }}>
+{% for k2, v2 in v %}
+    {{ k2 }} {{ v2 }}
+{% endfor %}
+  </{{ k }}>
+{% else %}
+  {{ k }} {{ v }}
+{% endif -%}
+{% endfor %}
+</system>
+{% endfor %}
+{% endif %}
+
+{% if source %}
+{% for source_item in source %}
+<source>
+{% for k, v in source_item %}
+{% if v is mapping %}
+  <{{ k }}>
+{% for k2, v2 in v %}
+    {{ k2 }} {{ v2 }}
+{% endfor %}
+  </{{ k }}>
+{% else %}
+  {{ k }} {{ v }}
+{% endif -%}
+{% endfor %}
+</source>
+{% endfor %}
+{% endif %}
+
+{% if filter %}
+{% for filter_item in filter %}
+<filter {{ filter_item.match_pattern }}>
+{% for k, v in filter_item %}
+{% if v is mapping %}
+   <{{ k }}>
+{% for k2, v2 in v %}
+    {{ k2 }} {{ v2 }}
+{% endfor %}
+  </{{ k }}>
+{% else %}
+  {{ k }} {{ v }}
+{% endif -%}
+{% endfor %}
+</filter>
+{% endfor %}
+{% endif %}
+
+{% if match %}
+{% for match_item in match %}
+<match {{ match_item.match_pattern }}>
+{% for k, v in match_item %}
+{% if v is mapping %}
+  <{{ k }}>
+{% for k2, v2 in v %}
+    {{ k2 }} {{ v2 }}
+{% endfor %}
+  </{{ k }}>
+{% else %}
+  {{ k }} {{ v }}
+{% endif -%}
+
+{% endfor %}
+</match>
+{% endfor %}
+{% endif %}
