@@ -71,7 +71,7 @@ module.exports = async (directory) => {
     fsutils.rimraf(path.join(currentDir, ".git"));
   }
 
-  const modulesPath = path.join(currentDir, "modules");
+  const modulesPath = path.join(currentDir, "src");
   if (!fsutils.exists(modulesPath)) fsutils.mkdir(modulesPath);
 
   const stackConfig = yaml.load(stackFile);

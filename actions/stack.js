@@ -71,7 +71,7 @@ module.exports.describe = async (argv) => {
   processElements(pipelines, "Pipeline", components, null, stack.name, env, pipes);
 
   for (let pipeline of pipelines) {
-      processElements(pipeline.modules, "Pipeline/Module", components, pipeline.name, stack.name, env);
+      processElements(pipeline.functions, "Pipeline/Function", components, pipeline.name, stack.name, env);
   }
 
   processElements(sinks, "Sink", components, null, stack.name, env, pipes);
@@ -82,7 +82,7 @@ module.exports.describe = async (argv) => {
 
   for(let component of components) {
     switch (component.type) {
-      case "Module":
+      case "Function":
         try {
           const lambdaResource = await lambda.getFunction({ FunctionName: component.resource }).promise();
           component.status = "Created";
