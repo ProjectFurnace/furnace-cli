@@ -50,7 +50,7 @@ module.exports.new = async (name, moduleTemplate) => {
     ),
     templateDir = path.join(templatesDir, moduleTemplate),
     destinationDir = path.join(process.cwd(), "src", name),
-    destinationDefFile = path.join(destinationDir, "module.yaml");
+    destinationDefFile = path.join(destinationDir, "function.yaml");
   if (!fsutils.exists(templatesDir)) {
     await repository.add(
       ".",
