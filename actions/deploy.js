@@ -1,30 +1,27 @@
-const which = require("which")
-  , gitUtils = require("@project-furnace/gitutils")
-  , fsUtils = require("@project-furnace/fsutils")
-  , workspace = require("../utils/workspace")
-  , awsUtil = require("../utils/aws")
-  , path = require("path")
-  , yaml = require('yamljs')
-  , { spawn } = require('child_process')
-  ;
-
-module.exports = async (argv) => {
-  const workspaceDir = workspace.getWorkspaceDir()
-      , context = workspace.getCurrentContext()
-      , deployDir = path.join(workspaceDir, "deploy")
-      , functionTemplatesDir = path.join(workspaceDir, "function-templates")
-      , deployUrl = "https://github.com/ProjectFurnace/deploy.git"
-      , functionTemplatesUrl = "https://github.com/ProjectFurnace/function-templates.git"
-      , stackPath = argv._.length > 1 ? argv._[1] : process.cwd()
-      , stackFilePath = path.join(stackPath, "stack.yaml")
-      ;
-
+const which = require("which"),
+  gitUtils = require("@project-furnace/gitutils"),
+  fsUtils = require("@project-furnace/fsutils"),
+  workspace = require("../utils/workspace"),
+  awsUtil = require("../utils/aws"),
+  path = require("path"),
+  yaml = require("yamljs"),
+  { spawn } = require("child_process");
+module.exports = async argv => {
+  const workspaceDir = workspace.getWorkspaceDir(),
+    context = workspace.getCurrentContext(),
+    deployDir = path.join(workspaceDir, "deploy"),
+    functionTemplatesDir = path.join(workspaceDir, "function-templates"),
+    deployUrl = "https://github.com/ProjectFurnace/deploy.git",
+    functionTemplatesUrl =
+      "https://github.com/ProjectFurnace/function-templates.git",
+    stackPath = argv._.length > 1 ? argv._[1] : process.cwd(),
+    stackFilePath = path.join(stackPath, "stack.yaml");
   const platformEnv = getPlatformVariables(context);
 
-  const execProcess = (cmd, throwError = true) => {
+  const execProcess = (cmd, throwError = true, output = true) => {
     return new Promise((resolve, reject) => {
       const child = spawn(cmd, {
-        stdio: 'inherit',
+        stdio: output ? "inherit" : "pipe",
         shell: true,
         cwd: deployDir,
         env: {
@@ -36,10 +33,10 @@ module.exports = async (argv) => {
           PATH: process.env.PATH,
           BUILD_BUCKET: context.artifactBucket,
           FURNACE_INSTANCE: context.name
-        },
+        }
       });
 
-      child.on('close', (code) => {
+      child.on("close", code => {
         if (code !== 0 && throwError) {
           reject();
         } else {
@@ -47,16 +44,20 @@ module.exports = async (argv) => {
         }
       });
     });
-  }
+  };
 
   if (!context) {
-    console.error("unable to load current furnace context, ignite a furnace instance or import a context from file.");
+    console.error(
+      "unable to load current furnace context, ignite a furnace instance or import a context from file."
+    );
     return;
   }
 
-  const hasPulumi = which.sync('pulumi', { nothrow: true });
+  const hasPulumi = which.sync("pulumi", { nothrow: true });
   if (!hasPulumi) {
-    console.error("pulumi is missing, to install visit https://pulumi.io/quickstart/install.html");
+    console.error(
+      "pulumi is missing, to install visit https://pulumi.io/quickstart/install.html"
+    );
     return;
   }
 
@@ -95,46 +96,72 @@ module.exports = async (argv) => {
   const stackName = `${stackDef.name}-sandbox`;
 
   const commands = [
-    { command: `pulumi stack init ${stackName}`, errors: false }
-  ]
+    { command: `pulumi stack init ${stackName}`, errors: false, output: false }
+  ];
 
   switch (context.platform) {
     case "aws":
-      commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });
+      commands.push({
+        command: `pulumi config set --plaintext aws:region ${context.location}`,
+        errors: true,
+        output: false
+      });
       break;
     case "azure":
-      commands.push({ command: `pulumi config set --plaintext aws:region ${context.location}`, errors: true });
+      commands.push({
+        command: `pulumi config set --plaintext aws:region ${context.location}`,
+        errors: true,
+        output: false
+      });
       //commands.push({ command: `pulumi config set --plaintext azure:location ${context.location}`, errors: true })
       break;
     case "gcp":
-      commands.push({ command: `pulumi config set --plaintext gcp:project ${context.projectId}`, errors: true });
-      commands.push({ command: `pulumi config set --plaintext gcp:region ${context.location}`, errors: true });
+      commands.push({
+        command: `pulumi config set --plaintext gcp:project ${context.projectId}`,
+        errors: true,
+        output: false
+      });
+      commands.push({
+        command: `pulumi config set --plaintext gcp:region ${context.location}`,
+        errors: true,
+        output: false
+      });
       break;
   }
 
-  commands.push({ command: `pulumi stack select ${stackName}`, errors: true });
-  commands.push({ command: `pulumi up`, errors: false });
+  commands.push({
+    command: `pulumi stack select ${stackName}`,
+    errors: true,
+    output: false
+  });
+  commands.push({ command: `pulumi up`, errors: false, output: true });
 
   for (let command of commands) {
-    await execProcess(command.command, command.errors);
+    await execProcess(command.command, command.errors, command.output);
   }
-}
+};
 
 function getPlatformVariables(context) {
-
   switch (context.platform) {
     case "aws":
-      if (!context.awsProfile) throw new Error("context has no aws profile specified");
+      if (!context.awsProfile)
+        throw new Error("context has no aws profile specified");
 
-      let awsProfile = context && context.awsProfile ? context.awsProfile : "default";
+      let awsProfile =
+        context && context.awsProfile ? context.awsProfile : "default";
       const credentials = awsUtil.getCredentials(awsProfile);
-      if (!credentials || !(credentials.aws_access_key_id && credentials.aws_secret_access_key)) {
-        throw new Error(`unable to get credentials for aws profile ${context.awsProfile}`);
+      if (
+        !credentials ||
+        !(credentials.aws_access_key_id && credentials.aws_secret_access_key)
+      ) {
+        throw new Error(
+          `unable to get credentials for aws profile ${context.awsProfile}`
+        );
       }
 
       return {
         AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
-        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
+        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key
       };
 
     case "azure":
@@ -146,7 +173,8 @@ function getPlatformVariables(context) {
     case "gcp":
       return {
         GCP_PROJECT: context.projectId,
-        GOOGLE_APPLICATION_CREDENTIALS: "/Users/danny/Downloads/furnace-scratch-4d7da774a0e8.json"
+        GOOGLE_APPLICATION_CREDENTIALS:
+          "/Users/danny/Downloads/furnace-scratch-4d7da774a0e8.json"
       };
   }
 }
