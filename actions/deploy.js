@@ -5,7 +5,9 @@ const which = require("which"),
   awsUtil = require("../utils/aws"),
   path = require("path"),
   yaml = require("yamljs"),
+  execute = require("../utils/execute"),
   { spawn } = require("child_process");
+
 module.exports = async argv => {
   const workspaceDir = workspace.getWorkspaceDir(),
     context = workspace.getCurrentContext(),
@@ -18,10 +20,12 @@ module.exports = async argv => {
     stackFilePath = path.join(stackPath, "stack.yaml");
   const platformEnv = getPlatformVariables(context);
 
-  const execProcess = (cmd, throwError = true, output = true) => {
+  const execInteractiveProcess = (cmd, throwError = true, output = true) => {
     return new Promise((resolve, reject) => {
       const child = spawn(cmd, {
-        stdio: output ? "inherit" : "pipe",
+        stdio: output
+          ? ["inherit", "inherit", "ignore"]
+          : ["pipe", "pipe", "ignore"],
         shell: true,
         cwd: deployDir,
         env: {
@@ -38,12 +42,16 @@ module.exports = async argv => {
 
       child.on("close", code => {
         if (code !== 0 && throwError) {
-          reject();
+          reject(`error code ${code} running '${cmd}' in ${deployDir}`);
         } else {
           resolve();
         }
       });
     });
+  };
+
+  const execSilentProcess = cmd => {
+    return execute.execPromise(cmd, { cwd: deployDir });
   };
 
   if (!context) {
@@ -68,7 +76,7 @@ module.exports = async argv => {
   }
 
   if (!fsUtils.exists(path.join(deployDir, "node_modules"))) {
-    await execProcess(`npm install`);
+    await execSilentProcess(`npm install`);
   }
 
   if (!fsUtils.exists(functionTemplatesDir)) {
@@ -95,49 +103,80 @@ module.exports = async argv => {
 
   const stackName = `${stackDef.name}-sandbox`;
 
-  const commands = [
-    { command: `pulumi stack init ${stackName}`, errors: false, output: false }
-  ];
+  const commands = [];
+
+  let stackExists = false;
+
+  try {
+    const stackList = JSON.parse(
+      await execSilentProcess("pulumi --non-interactive stack ls --json")
+    );
+    stackExists = stackList.find(s => s.name === stackName) !== undefined;
+  } catch (error) {
+    throw new Error("unable to get stack list");
+  }
+
+  if (!stackExists) {
+    // commands.push({
+    //   command: `pulumi stack init ${stackName}`,
+    //   errors: false,
+    //   output: false
+    // });
+    await execSilentProcess(`pulumi stack init ${stackName}`);
+  }
 
   switch (context.platform) {
     case "aws":
       commands.push({
-        command: `pulumi config set --plaintext aws:region ${context.location}`,
+        command: `pulumi -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
       });
       break;
     case "azure":
       commands.push({
-        command: `pulumi config set --plaintext aws:region ${context.location}`,
+        command: `pulumi -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
       });
-      //commands.push({ command: `pulumi config set --plaintext azure:location ${context.location}`, errors: true })
+      //commands.push({ command: `pulumi -s ${stackName} config set --plaintext azure:location ${context.location}`, errors: true })
       break;
     case "gcp":
       commands.push({
-        command: `pulumi config set --plaintext gcp:project ${context.projectId}`,
+        command: `pulumi -s ${stackName} config  set --plaintext gcp:project ${context.projectId}`,
         errors: true,
         output: false
       });
       commands.push({
-        command: `pulumi config set --plaintext gcp:region ${context.location}`,
+        command: `pulumi -s ${stackName} config set --plaintext gcp:region ${context.location}`,
         errors: true,
         output: false
       });
       break;
   }
 
+  // commands.push({
+  //   command: `pulumi stack select ${stackName}`,
+  //   errors: true,
+  //   output: false
+  // });
   commands.push({
-    command: `pulumi stack select ${stackName}`,
-    errors: true,
-    output: false
+    command: `pulumi -s ${stackName} up`,
+    errors: false,
+    output: true
   });
-  commands.push({ command: `pulumi up`, errors: false, output: true });
 
-  for (let command of commands) {
-    await execProcess(command.command, command.errors, command.output);
+  try {
+    for (let command of commands) {
+      await execInteractiveProcess(
+        command.command,
+        command.errors,
+        command.output
+      );
+    }
+  } catch (error) {
+    console.error("error running deploy");
+    console.error(error);
   }
 };
 
