@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "jest",
-    "prepublish": "npm version patch"
+    "prepublishOnly": "npm version patch"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,7 @@
     "@project-furnace/fsutils": "^0.1.6",
     "@project-furnace/gitutils": "^0.1.4",
     "@project-furnace/s3utils": "^0.1.6",
-    "@project-furnace/stack-processor": "0.0.19",
+    "@project-furnace/stack-processor": "^0.0.20",
     "@project-furnace/ziputils": "^0.1.4",
     "aws-sdk": "^2.368.0",
     "axios": "^0.19.0",
