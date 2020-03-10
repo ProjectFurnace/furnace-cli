@@ -1,12 +1,12 @@
 {
   "name": "@project-furnace/cli",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "CLI for the Furnace streaming data processing framework",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "jest",
-    "postpublish": "npm version minor"
+    "prepublish": "npm version patch"
   },
   "repository": {
     "type": "git",
