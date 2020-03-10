@@ -19,7 +19,9 @@ module.exports = async argv => {
     functionTemplatesUrl =
       "https://github.com/ProjectFurnace/function-templates.git",
     stackPath = argv._.length > 1 ? argv._[1] : process.cwd(),
-    stackFilePath = path.join(stackPath, "stack.yaml");
+    stackFilePath = path.join(stackPath, "stack.yaml"),
+    homedir = require("os").homedir();
+
   const platformEnv = getPlatformVariables(context);
 
   // attempt to parse config before sending to deploy
@@ -48,7 +50,8 @@ module.exports = async argv => {
           TEMPLATE_REPO_DIR: functionTemplatesDir,
           PATH: process.env.PATH,
           BUILD_BUCKET: context.artifactBucket,
-          FURNACE_INSTANCE: context.name
+          FURNACE_INSTANCE: context.name,
+          PULUMI_CONFIG_PASSPHRASE: "abc"
         }
       });
 
@@ -63,7 +66,10 @@ module.exports = async argv => {
   };
 
   const execSilentProcess = cmd => {
-    return execute.execPromise(cmd, { cwd: deployDir });
+    return execute.execPromise(cmd, {
+      cwd: deployDir,
+      env: { PULUMI_CONFIG_PASSPHRASE: "abc" }
+    });
   };
 
   if (!context) {
@@ -120,6 +126,24 @@ module.exports = async argv => {
   let stackExists = false;
 
   try {
+    let localLogin = true;
+    const pulumiConfigLocation = homedir + "/.pulumi/credentials.json";
+
+    if (fsUtils.exists(pulumiConfigLocation)) {
+      const pulumiConfig = require(pulumiConfigLocation);
+
+      localLogin = pulumiConfig.current && pulumiConfig.current === "file://~";
+    }
+
+    if (localLogin) {
+      await execSilentProcess("pulumi login --local");
+      console.log("logged in locally");
+    }
+  } catch (error) {
+    throw new Error("unable to login");
+  }
+
+  try {
     const stackList = JSON.parse(
       await execSilentProcess("pulumi --non-interactive stack ls --json")
     );
@@ -134,20 +158,20 @@ module.exports = async argv => {
     //   errors: false,
     //   output: false
     // });
-    await execSilentProcess(`pulumi stack init ${stackName}`);
+    await execSilentProcess(`pulumi --non-interactive stack init ${stackName}`);
   }
 
   switch (context.platform) {
     case "aws":
       commands.push({
-        command: `pulumi -s ${stackName} config set --plaintext aws:region ${context.location}`,
+        command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
       });
       break;
     case "azure":
       commands.push({
-        command: `pulumi -s ${stackName} config set --plaintext aws:region ${context.location}`,
+        command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
       });
@@ -155,12 +179,12 @@ module.exports = async argv => {
       break;
     case "gcp":
       commands.push({
-        command: `pulumi -s ${stackName} config  set --plaintext gcp:project ${context.projectId}`,
+        command: `pulumi --non-interactive -s ${stackName} config  set --plaintext gcp:project ${context.projectId}`,
         errors: true,
         output: false
       });
       commands.push({
-        command: `pulumi -s ${stackName} config set --plaintext gcp:region ${context.location}`,
+        command: `pulumi --non-interactive -s ${stackName} config set --plaintext gcp:region ${context.location}`,
         errors: true,
         output: false
       });
@@ -172,6 +196,7 @@ module.exports = async argv => {
   //   errors: true,
   //   output: false
   // });
+
   commands.push({
     command: `pulumi -s ${stackName} up`,
     errors: false,
