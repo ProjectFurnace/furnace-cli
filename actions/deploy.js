@@ -195,11 +195,10 @@ module.exports = async argv => {
 function getPlatformVariables(context) {
   switch (context.platform) {
     case "aws":
-      if (!context.awsProfile)
+      if (!context.profile)
         throw new Error("context has no aws profile specified");
 
-      let awsProfile =
-        context && context.awsProfile ? context.awsProfile : "default";
+      let awsProfile = context && context.profile ? context.profile : "default";
       const credentials = awsUtil.getCredentials(awsProfile);
       if (
         !credentials ||
