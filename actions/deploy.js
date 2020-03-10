@@ -68,7 +68,7 @@ module.exports = async argv => {
   const execSilentProcess = cmd => {
     return execute.execPromise(cmd, {
       cwd: deployDir,
-      env: { PULUMI_CONFIG_PASSPHRASE: "abc" }
+      env: { PULUMI_CONFIG_PASSPHRASE: "abc", ...process.env }
     });
   };
 
