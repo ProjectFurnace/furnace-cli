@@ -6,7 +6,9 @@ const which = require("which"),
   path = require("path"),
   yaml = require("yamljs"),
   execute = require("../utils/execute"),
-  { spawn } = require("child_process");
+  { spawn } = require("child_process"),
+  { Processor } = require("@project-furnace/stack-processor"),
+  util = require("util");
 
 module.exports = async argv => {
   const workspaceDir = workspace.getWorkspaceDir(),
@@ -19,6 +21,16 @@ module.exports = async argv => {
     stackPath = argv._.length > 1 ? argv._[1] : process.cwd(),
     stackFilePath = path.join(stackPath, "stack.yaml");
   const platformEnv = getPlatformVariables(context);
+
+  // attempt to parse config before sending to deploy
+  const processor = new Processor(stackPath, functionTemplatesDir);
+  try {
+    const flows = processor.getFlows();
+  } catch (error) {
+    console.error(`unable to process stack`);
+    console.error(error);
+    process.exit(1);
+  }
 
   const execInteractiveProcess = (cmd, throwError = true, output = true) => {
     return new Promise((resolve, reject) => {
