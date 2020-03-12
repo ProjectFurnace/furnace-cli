@@ -63,7 +63,7 @@ module.exports = async directory => {
       type: "list",
       name: "org",
       message: "GitHub Org:",
-      choices: orgList,
+      choices: orgList || [],
       when: isGitHub && currentConfig.gitToken
     },
     {
