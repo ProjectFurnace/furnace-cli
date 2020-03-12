@@ -118,10 +118,10 @@ module.exports = async argv => {
         {
           type: "password",
           name: "gitToken",
-          message: "GitHub Access Token:",
+          message: "GitHub Access Token (enter to skip):",
           default: "",
-          mask: "*",
-          validate: input => (!input ? "GitHub Access Token is Required" : true)
+          mask: "*"
+          // validate: input => (!input ? "GitHub Access Token is Required" : true)
         },
         {
           type: "password",
@@ -306,7 +306,7 @@ async function initialiseIgnite(config) {
     await gitutils.pull(coreModulesRepoDir);
   }
 
-  if (gitProvider === "github") {
+  if (gitProvider === "github" && gitToken) {
     try {
       github.authenticateWithToken(gitToken);
     } catch (err) {
