@@ -65,7 +65,8 @@ module.exports.describe = async argv => {
   const aws = require("../utils/aws").getInstance();
 
   const components = [];
-  const { env } = argv;
+  let { env } = argv;
+  if (!env) env = "sandbox";
 
   const stack = stackUtil.getConfig("stack"),
     sources = stackUtil.getConfig("sources"),
@@ -73,6 +74,7 @@ module.exports.describe = async argv => {
     pipelines = stackUtil.getConfig("pipelines"),
     sinks = stackUtil.getConfig("sinks"),
     pipes = stackUtil.getConfig("pipes");
+
   processElements(sources, "Source", components, null, stack.name, env);
   processElements(taps, "Tap", components, null, stack.name, env);
   processElements(
@@ -85,7 +87,7 @@ module.exports.describe = async argv => {
     pipes
   );
 
-  for (let pipeline of pipelines) {
+  for (let pipeline of pipelines || []) {
     processElements(
       pipeline.functions,
       "Pipeline/Function",
@@ -155,7 +157,7 @@ function processElements(
   env,
   pipes
 ) {
-  for (let obj of list) {
+  for (let obj of list || []) {
     const name = obj.name;
 
     if (!parent) {
@@ -177,7 +179,7 @@ function processElements(
     let type;
     if (obj.type) type = obj.type;
     else if (element == "Pipeline") type = "Pipeline";
-    else type = "Module";
+    else type = "Function";
 
     const resource = `${stackName}-${obj.name}-${env}`;
     components.push({ element, type, name, parent, resource });
