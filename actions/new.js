@@ -90,7 +90,7 @@ module.exports = async directory => {
       type: "confirm",
       name: "privateRepo",
       message: "Private Repository?",
-      when: current.createRepos
+      when: current => current.createRepos
     },
     {
       type: "confirm",
