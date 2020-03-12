@@ -94,7 +94,8 @@ module.exports = async argv => {
   }
 
   if (!fsUtils.exists(path.join(deployDir, "node_modules"))) {
-    await execSilentProcess(`npm install`);
+    console.log("installing node modules...");
+    await execInteractiveProcess(`npm install`);
   }
 
   if (!fsUtils.exists(functionTemplatesDir)) {
