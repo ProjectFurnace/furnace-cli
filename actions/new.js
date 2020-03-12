@@ -6,6 +6,7 @@ const workspace = require("../utils/workspace"),
   inquirer = require("inquirer"),
   yaml = require("yamljs"),
   githubUtil = require("../utils/github");
+
 module.exports = async directory => {
   const currentDir = directory
     ? path.join(process.cwd(), directory)
@@ -29,6 +30,7 @@ module.exports = async directory => {
         ? await githubUtil.getAuthenticatedUser(currentConfig.gitToken)
         : [],
     orgList = [gitHubUser.login].concat(gitHubOrgs);
+
   const questions = [
     {
       type: "input",
@@ -62,20 +64,21 @@ module.exports = async directory => {
       name: "org",
       message: "GitHub Org:",
       choices: orgList,
-      when: isGitHub
+      when: isGitHub && currentConfig.gitToken
     },
     {
       type: "input",
       name: "repo",
       message: "GitHub Repository:",
       default: defaultStackName,
-      when: isGitHub
+      when: isGitHub && currentConfig.gitToken
     },
     {
       type: "input",
       name: "stateRepo",
       message: "Repository:",
-      default: current => current.repo + "-state"
+      default: current => current.repo + "-state",
+      when: isGitHub && currentConfig.gitToken
     },
     {
       type: "confirm",
@@ -87,7 +90,7 @@ module.exports = async directory => {
       type: "confirm",
       name: "privateRepo",
       message: "Private Repository?",
-      when: current => current.createRepos
+      when: current.createRepos
     },
     {
       type: "confirm",
