@@ -31,6 +31,8 @@ module.exports = async directory => {
         : [],
     orgList = [gitHubUser.login].concat(gitHubOrgs);
 
+  const hasGitToken = currentConfig.gitToken ? true : false;
+
   const questions = [
     {
       type: "input",
@@ -64,27 +66,27 @@ module.exports = async directory => {
       name: "org",
       message: "GitHub Org:",
       choices: orgList || [],
-      when: isGitHub && currentConfig.gitToken
+      when: isGitHub && hasGitToken
     },
     {
       type: "input",
       name: "repo",
       message: "GitHub Repository:",
       default: defaultStackName,
-      when: isGitHub && currentConfig.gitToken
+      when: isGitHub && hasGitToken
     },
     {
       type: "input",
       name: "stateRepo",
       message: "Repository:",
       default: current => current.repo + "-state",
-      when: isGitHub && currentConfig.gitToken
+      when: isGitHub && hasGitToken
     },
     {
       type: "confirm",
       name: "createRepos",
       message: "Create GitHub Repositories?",
-      when: isGitHub && currentConfig.gitToken
+      when: isGitHub && hasGitToken
     },
     {
       type: "confirm",
@@ -96,7 +98,7 @@ module.exports = async directory => {
       type: "confirm",
       name: "createHook",
       message: "Create GitHub Webhook",
-      when: current => isGitHub && current.createRepos && currentConfig.gitToken
+      when: current => isGitHub && current.createRepos && hasGitToken
     }
     //{ type: 'password', name: 'hookSecret', message: "Webhook Secret:", when: current => current.createHook },
   ];
@@ -206,9 +208,11 @@ module.exports = async directory => {
 
     console.log(`created repositories`);
   } else {
-    console.log(
-      `please ensure you create the remote repositories.\nstack repository: ${remoteUrl}\nstate repository: ${stateRemoteUrl}`
-    );
+    if (org && repo) {
+      console.log(
+        `please ensure you create the remote repositories.\nstack repository: ${remoteUrl}\nstate repository: ${stateRemoteUrl}`
+      );
+    }
   }
 
   if (createHook) {
