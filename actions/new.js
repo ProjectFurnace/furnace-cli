@@ -59,20 +59,22 @@ module.exports = async directory => {
       type: "input",
       name: "stackName",
       message: "Stack Name:",
-      default: defaultStackName
+      default: defaultStackName,
+      validate: input =>
+        input.includes("-") ? "stack name cannot contain dashes" : true
     },
     {
       type: "list",
       name: "org",
       message: "GitHub Org:",
-      choices: orgList || [],
+      choices: orgList,
       when: isGitHub && hasGitToken
     },
     {
       type: "input",
       name: "repo",
       message: "GitHub Repository:",
-      default: defaultStackName,
+      default: current => current.stackName,
       when: isGitHub && hasGitToken
     },
     {
