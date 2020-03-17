@@ -8,7 +8,11 @@ const which = require("which"),
   execute = require("../utils/execute"),
   { spawn } = require("child_process"),
   { Processor } = require("@project-furnace/stack-processor"),
-  util = require("util");
+  util = require("util"),
+  inquirer = require("inquirer"),
+  chalk = require("chalk"),
+  Table = require("cli-table3"),
+  ora = require("ora");
 
 module.exports = async argv => {
   const workspaceDir = workspace.getWorkspaceDir(),
@@ -68,7 +72,17 @@ module.exports = async argv => {
   const execSilentProcess = cmd => {
     return execute.execPromise(cmd, {
       cwd: deployDir,
-      env: { PULUMI_CONFIG_PASSPHRASE: "abc", ...process.env }
+      env: {
+        ...platformEnv,
+        PLATFORM: context.platform,
+        FURNACE_LOCAL: "true",
+        REPO_DIR: stackPath,
+        TEMPLATE_REPO_DIR: functionTemplatesDir,
+        PATH: process.env.PATH,
+        BUILD_BUCKET: context.artifactBucket,
+        FURNACE_INSTANCE: context.name,
+        PULUMI_CONFIG_PASSPHRASE: "abc"
+      }
     });
   };
 
@@ -122,7 +136,7 @@ module.exports = async argv => {
 
   const stackName = `${stackDef.name}-sandbox`;
 
-  const commands = [];
+  const preCommands = [];
 
   let stackExists = false;
 
@@ -164,14 +178,14 @@ module.exports = async argv => {
 
   switch (context.platform) {
     case "aws":
-      commands.push({
+      preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
       });
       break;
     case "azure":
-      commands.push({
+      preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
         output: false
@@ -179,12 +193,12 @@ module.exports = async argv => {
       //commands.push({ command: `pulumi -s ${stackName} config set --plaintext azure:location ${context.location}`, errors: true })
       break;
     case "gcp":
-      commands.push({
+      preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config  set --plaintext gcp:project ${context.projectId}`,
         errors: true,
         output: false
       });
-      commands.push({
+      preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext gcp:region ${context.location}`,
         errors: true,
         output: false
@@ -198,14 +212,15 @@ module.exports = async argv => {
   //   output: false
   // });
 
-  commands.push({
-    command: `pulumi -s ${stackName} up`,
-    errors: false,
-    output: true
-  });
+  // preCommands.push({
+  //   command: `pulumi -s ${stackName} up`,
+  //   errors: false,
+  //   output: true
+  // });
+  const spinner = ora("preparing environment").start();
 
   try {
-    for (let command of commands) {
+    for (let command of preCommands) {
       await execInteractiveProcess(
         command.command,
         command.errors,
@@ -213,10 +228,101 @@ module.exports = async argv => {
       );
     }
   } catch (error) {
-    console.error("error running deploy");
+    spinner.fail("error initialising deploy operation");
     console.error(error);
+    return 1;
+  }
+  try {
+    spinner.text = "running preview";
+    const previewResult = await execSilentProcess(
+      `pulumi --non-interactive -s ${stackName} preview --json`
+    );
+    processDeployDefinition(JSON.parse(previewResult));
+  } catch (error) {
+    console.log(error);
+    spinner.fail("unable to preview deployment");
+    return 1;
+  }
+
+  try {
+    spinner.stop();
+    const { doDeploy } = await inquirer.prompt({
+      type: "confirm",
+      name: "doDeploy",
+      message: "Continue",
+      default: false
+    });
+
+    if (doDeploy) {
+      spinner.text = "running deployment";
+      spinner.start();
+
+      const updateResult = await execSilentProcess(
+        `pulumi --non-interactive up --skip-preview`
+      );
+      // console.log(updateResult);
+      // processDeployDefinition(JSON.parse(updateResult));
+      spinner.succeed("deployment successful");
+    } else {
+      spinner.stop();
+    }
+  } catch (error) {
+    spinner.fail("unable to process deployment");
+    console.log(error);
   }
 };
+
+function processDeployDefinition(output) {
+  let results = [];
+
+  if (output.steps) {
+    for (let step of output.steps) {
+      const { op, urn } = step;
+
+      let type;
+      if (step.newState) {
+        type = step.newState.type;
+      } else if (step.oldState) {
+        type = step.oldState.type;
+      }
+
+      const urnParts = urn.split("::");
+      const name = urnParts[urnParts.length - 1];
+
+      if (type !== "pulumi:pulumi:Stack") {
+        results.push({
+          name,
+          op,
+          type
+        });
+      }
+    }
+
+    const table = new Table({
+      head: ["operation", "name", "type"]
+    });
+
+    for (let result of results) {
+      const { name, op, type } = result;
+      table.push([getOperationColor(op), name, type]);
+    }
+    console.log();
+    console.log(table.toString());
+  }
+}
+
+function getOperationColor(op) {
+  switch (op) {
+    case "create":
+      return chalk.green(op);
+    case "delete":
+      return chalk.red(op);
+    case "update":
+      return chalk.rgb(255, 136, 0).bold(op);
+    default:
+      return op;
+  }
+}
 
 function getPlatformVariables(context) {
   switch (context.platform) {

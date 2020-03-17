@@ -48,6 +48,7 @@
     "inquirer": "^7.1.0",
     "moment": "^2.24.0",
     "ms-rest-azure": "^3.0.0",
+    "ora": "^4.0.3",
     "randomstring": "^1.1.5",
     "smoketail": "^0.2.2",
     "superagent": "^5.2.2",
