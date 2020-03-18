@@ -275,40 +275,49 @@ module.exports = async argv => {
 function processDeployDefinition(output) {
   let results = [];
 
-  if (output.steps) {
-    for (let step of output.steps) {
-      const { op, urn } = step;
+  if (!output.steps) return;
 
-      let type;
-      if (step.newState) {
-        type = step.newState.type;
-      } else if (step.oldState) {
-        type = step.oldState.type;
-      }
+  const steps = output.steps.filter(
+    step => step.newState && step.newState.type !== "pulumi:pulumi:Stack"
+  );
 
-      const urnParts = urn.split("::");
-      const name = urnParts[urnParts.length - 1];
-
-      if (type !== "pulumi:pulumi:Stack") {
-        results.push({
-          name,
-          op,
-          type
-        });
-      }
-    }
-
-    const table = new Table({
-      head: ["operation", "name", "type"]
-    });
-
-    for (let result of results) {
-      const { name, op, type } = result;
-      table.push([getOperationColor(op), name, type]);
-    }
-    console.log();
-    console.log(table.toString());
+  if (steps.length === 0) {
+    console.log("\nno changes");
+    return;
   }
+
+  for (let step of steps) {
+    const { op, urn } = step;
+
+    let type;
+    if (step.newState) {
+      type = step.newState.type;
+    } else if (step.oldState) {
+      type = step.oldState.type;
+    }
+
+    const urnParts = urn.split("::");
+    const name = urnParts[urnParts.length - 1];
+
+    if (type !== "pulumi:pulumi:Stack") {
+      results.push({
+        name,
+        op,
+        type
+      });
+    }
+  }
+
+  const table = new Table({
+    head: ["operation", "name", "type"]
+  });
+
+  for (let result of results) {
+    const { name, op, type } = result;
+    table.push([getOperationColor(op), name, type]);
+  }
+  console.log();
+  console.log(table.toString());
 }
 
 function getOperationColor(op) {
