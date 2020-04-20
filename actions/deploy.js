@@ -239,7 +239,20 @@ module.exports = async argv => {
     );
     processDeployDefinition(JSON.parse(previewResult));
   } catch (error) {
-    console.log(error);
+    if (error.stdout) {
+      const result = JSON.parse(error.stdout);
+
+      if (result.diagnostics) {
+        for (let diag of result.diagnostics) {
+          if (diag.severity === "error") console.log(chalk.red(diag.message));
+        }
+      }
+    }
+
+    if (process.env.DEBUG) {
+      console.log(error);
+    }
+
     spinner.fail("unable to preview deployment");
     return 1;
   }
@@ -260,8 +273,7 @@ module.exports = async argv => {
       const updateResult = await execSilentProcess(
         `pulumi --non-interactive up --skip-preview`
       );
-      // console.log(updateResult);
-      // processDeployDefinition(JSON.parse(updateResult));
+
       spinner.succeed("deployment successful");
     } else {
       spinner.stop();
@@ -277,9 +289,10 @@ function processDeployDefinition(output) {
 
   if (!output.steps) return;
 
-  const steps = output.steps.filter(
-    step => step.newState && step.newState.type !== "pulumi:pulumi:Stack"
-  );
+  const steps = output.steps.filter(step => {
+    const state = step.newState || step.oldState;
+    if (state.type !== "pulumi:pulumi:Stack") return step;
+  });
 
   if (steps.length === 0) {
     console.log("\nno changes");
@@ -298,6 +311,9 @@ function processDeployDefinition(output) {
 
     const urnParts = urn.split("::");
     const name = urnParts[urnParts.length - 1];
+
+    const typeParts = type.split(":");
+    type = typeParts[typeParts.length - 1];
 
     if (type !== "pulumi:pulumi:Stack") {
       results.push({
@@ -364,8 +380,7 @@ function getPlatformVariables(context) {
     case "gcp":
       return {
         GCP_PROJECT: context.projectId,
-        GOOGLE_APPLICATION_CREDENTIALS:
-          "/Users/danny/Downloads/furnace-scratch-4d7da774a0e8.json"
+        GOOGLE_APPLICATION_CREDENTIALS: "/tmp/furnace-scratch.json"
       };
   }
 }

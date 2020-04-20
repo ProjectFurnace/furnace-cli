@@ -7,6 +7,9 @@ process.env.NODE_ENV = "production";
 
 (async () => {
   workspace.initialize();
-    
-  program.completion().commandDir('commands').demandCommand().argv
+
+  program
+    .completion()
+    .commandDir("commands")
+    .demandCommand().argv;
 })();

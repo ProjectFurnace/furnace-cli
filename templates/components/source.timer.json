@@ -1,0 +1,5 @@
+{
+  "config": {
+    "scheduleExpression": "rate(60 minutes)"
+  }
+}

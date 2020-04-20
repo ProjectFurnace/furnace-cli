@@ -4,7 +4,8 @@ module.exports.execPromise = (command, options) => {
   return new Promise((resolve, reject) => {
     exec(command, options, (error, stdout, stderr) => {
       if (error) {
-        reject(error);
+        // console.log("got error", stderr, stdout);
+        reject({ error, stdout, stderr });
         return;
       }
       resolve(stdout);
