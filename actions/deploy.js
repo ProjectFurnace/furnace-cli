@@ -14,7 +14,7 @@ const which = require("which"),
   Table = require("cli-table3"),
   ora = require("ora");
 
-module.exports = async argv => {
+module.exports = async (argv) => {
   const workspaceDir = workspace.getWorkspaceDir(),
     context = workspace.getCurrentContext(),
     deployDir = path.join(workspaceDir, "deploy"),
@@ -55,11 +55,11 @@ module.exports = async argv => {
           PATH: process.env.PATH,
           BUILD_BUCKET: context.artifactBucket,
           FURNACE_INSTANCE: context.name,
-          PULUMI_CONFIG_PASSPHRASE: "abc"
-        }
+          PULUMI_CONFIG_PASSPHRASE: "abc",
+        },
       });
 
-      child.on("close", code => {
+      child.on("close", (code) => {
         if (code !== 0 && throwError) {
           reject(`error code ${code} running '${cmd}' in ${deployDir}`);
         } else {
@@ -69,7 +69,7 @@ module.exports = async argv => {
     });
   };
 
-  const execSilentProcess = cmd => {
+  const execSilentProcess = (cmd) => {
     return execute.execPromise(cmd, {
       cwd: deployDir,
       env: {
@@ -81,8 +81,8 @@ module.exports = async argv => {
         PATH: process.env.PATH,
         BUILD_BUCKET: context.artifactBucket,
         FURNACE_INSTANCE: context.name,
-        PULUMI_CONFIG_PASSPHRASE: "abc"
-      }
+        PULUMI_CONFIG_PASSPHRASE: "abc",
+      },
     });
   };
 
@@ -162,7 +162,7 @@ module.exports = async argv => {
     const stackList = JSON.parse(
       await execSilentProcess("pulumi --non-interactive stack ls --json")
     );
-    stackExists = stackList.find(s => s.name === stackName) !== undefined;
+    stackExists = stackList.find((s) => s.name === stackName) !== undefined;
   } catch (error) {
     throw new Error("unable to get stack list");
   }
@@ -181,14 +181,14 @@ module.exports = async argv => {
       preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
-        output: false
+        output: false,
       });
       break;
     case "azure":
       preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext aws:region ${context.location}`,
         errors: true,
-        output: false
+        output: false,
       });
       //commands.push({ command: `pulumi -s ${stackName} config set --plaintext azure:location ${context.location}`, errors: true })
       break;
@@ -196,12 +196,12 @@ module.exports = async argv => {
       preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config  set --plaintext gcp:project ${context.projectId}`,
         errors: true,
-        output: false
+        output: false,
       });
       preCommands.push({
         command: `pulumi --non-interactive -s ${stackName} config set --plaintext gcp:region ${context.location}`,
         errors: true,
-        output: false
+        output: false,
       });
       break;
   }
@@ -237,14 +237,38 @@ module.exports = async argv => {
     const previewResult = await execSilentProcess(
       `pulumi --non-interactive -s ${stackName} preview --json`
     );
-    processDeployDefinition(JSON.parse(previewResult));
+
+    const previewResultObj = JSON.parse(previewResult);
+
+    if (process.env.FURNACE_DEBUG) {
+      console.log("\n");
+      for (let diag of previewResultObj.diagnostics) {
+        console.log(`${diag.severity} - ${diag.message.trim()}`);
+      }
+    }
+
+    processDeployDefinition(previewResultObj);
   } catch (error) {
+    // console.log(error);
     if (error.stdout) {
       const result = JSON.parse(error.stdout);
 
+      console.log("\n");
+
       if (result.diagnostics) {
         for (let diag of result.diagnostics) {
-          if (diag.severity === "error") console.log(chalk.red(diag.message));
+          const msg = `${diag.severity} - ${diag.message.trim()}`;
+
+          switch (diag.severity) {
+            case "info":
+              console.log(msg);
+              break;
+            case "warning":
+              console.log(chalk.orange(msg));
+              break;
+            default:
+              console.log(chalk.red(msg));
+          }
         }
       }
     }
@@ -263,7 +287,7 @@ module.exports = async argv => {
       type: "confirm",
       name: "doDeploy",
       message: "Continue",
-      default: false
+      default: false,
     });
 
     if (doDeploy) {
@@ -289,7 +313,7 @@ function processDeployDefinition(output) {
 
   if (!output.steps) return;
 
-  const steps = output.steps.filter(step => {
+  const steps = output.steps.filter((step) => {
     const state = step.newState || step.oldState;
     if (state.type !== "pulumi:pulumi:Stack") return step;
   });
@@ -319,13 +343,13 @@ function processDeployDefinition(output) {
       results.push({
         name,
         op,
-        type
+        type,
       });
     }
   }
 
   const table = new Table({
-    head: ["operation", "name", "type"]
+    head: ["operation", "name", "type"],
   });
 
   for (let result of results) {
@@ -368,19 +392,19 @@ function getPlatformVariables(context) {
 
       return {
         AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
-        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key
+        AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
       };
 
     case "azure":
       return {
         STACK_REGION: context.location,
-        STORAGE_CONNECTION_STRING: context.artifactBucketConnectionString
+        STORAGE_CONNECTION_STRING: context.artifactBucketConnectionString,
       };
 
     case "gcp":
       return {
         GCP_PROJECT: context.projectId,
-        GOOGLE_APPLICATION_CREDENTIALS: "/tmp/furnace-scratch.json"
+        GOOGLE_APPLICATION_CREDENTIALS: "/tmp/furnace-scratch.json",
       };
   }
 }
