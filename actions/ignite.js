@@ -15,7 +15,7 @@ const gitutils = require("@project-furnace/gitutils"),
   gcpUtil = require("../utils/gcp"),
   igniteUtil = require("../utils/ignite"),
   which = require("which");
-module.exports = async argv => {
+module.exports = async (argv) => {
   const doBootstrap = argv.bootstrap === undefined ? true : argv.bootstrap;
   let resume = false;
 
@@ -28,14 +28,14 @@ module.exports = async argv => {
         {
           type: "confirm",
           name: "resume",
-          message: "a previous ignite did not complete, resume?"
+          message: "a previous ignite did not complete, resume?",
         },
         {
           type: "confirm",
           name: "clear",
           message: "clear previous attempt?",
-          when: current => !current.resume
-        }
+          when: (current) => !current.resume,
+        },
       ];
 
       const resumeAnswers = await inquirer.prompt(resultQuestions);
@@ -54,14 +54,14 @@ module.exports = async argv => {
       { name: "gitProvider", alias: "g", type: String },
       { name: "gitToken", alias: "t", type: String },
       { name: "storeGitHubToken", defaultValue: true, type: Boolean },
-      { name: "location", alias: "l", type: String }
+      { name: "location", alias: "l", type: String },
     ];
     const mainOptions = commandLineArgs(mainDefinitions, {
-      stopAtFirstUnknown: true
+      stopAtFirstUnknown: true,
     });
 
     let argv = mainOptions._unknown || [];
-    argv = argv.filter(a => a !== "--no-bootstrap");
+    argv = argv.filter((a) => a !== "--no-bootstrap");
 
     let passedOptions = [];
     let platformDefinitions = [];
@@ -75,13 +75,13 @@ module.exports = async argv => {
             name: "secretAccessKey",
             alias: "p",
             type: String,
-            defaultValue: null
-          }
+            defaultValue: null,
+          },
         ];
         break;
       case "azure":
         platformDefinitions = [
-          { name: "subscriptionId", alias: "s", type: String }
+          { name: "subscriptionId", alias: "s", type: String },
         ];
         break;
       case "gcp":
@@ -106,13 +106,13 @@ module.exports = async argv => {
           name: "name",
           message: "Name this Furnace Instance:",
           default: "furnace",
-          validate: validateInstanceName
+          validate: validateInstanceName,
         },
         {
           type: "list",
           name: "platform",
           message: "Platform:",
-          choices: ["aws", "azure", "gcp"]
+          choices: ["aws", "azure", "gcp"],
         },
         //{ type: 'input', name: 'bucket', message: "Artifact Bucket:", default: current => current.name + "-artifacts" },
         {
@@ -120,7 +120,7 @@ module.exports = async argv => {
           name: "gitToken",
           message: "GitHub Access Token (enter to skip):",
           default: "",
-          mask: "*"
+          mask: "*",
           // validate: input => (!input ? "GitHub Access Token is Required" : true)
         },
         {
@@ -128,14 +128,14 @@ module.exports = async argv => {
           name: "npmToken",
           message: "NPM Access Token (enter to skip):",
           default: "",
-          mask: "*"
+          mask: "*",
         },
         //{ type: 'list', name: 'gitProvider', message: "Git Provider:", choices: ["github"] },
         {
           type: "confirm",
           name: "storeGitHubToken",
-          message: "Store GitHub Token"
-        } //, when: current => current.gitProvider === "github" }
+          message: "Store GitHub Token",
+        }, //, when: current => current.gitProvider === "github" }
       ];
 
       config = await inquirer.prompt(questions);
@@ -156,28 +156,28 @@ module.exports = async argv => {
             name: "profile",
             message: "AWS Profile:",
             choices: profiles,
-            when: !requireCredentials
+            when: !requireCredentials,
           },
           {
             type: "input",
             name: "accessKeyId",
             message: "AWS Access Key:",
-            when: requireCredentials
+            when: requireCredentials,
           },
           {
             type: "password",
             name: "secretAccessKey",
             message: "AWS Secret Access Key:",
             mask: "*",
-            when: requireCredentials
+            when: requireCredentials,
           },
           {
             type: "list",
             name: "location",
             message: "Region:",
             choices: awsUtil.getRegions(),
-            default: current => awsUtil.getDefaultRegion(current.profile)
-          }
+            default: (current) => awsUtil.getDefaultRegion(current.profile),
+          },
         ];
         break;
 
@@ -186,14 +186,14 @@ module.exports = async argv => {
           {
             type: "input",
             name: "subscriptionId",
-            message: "Azure Subscription Id:"
+            message: "Azure Subscription Id:",
           },
           {
             type: "list",
             name: "location",
             message: "Location:",
-            choices: azureUtil.getRegions()
-          } //, default: current => getDefaultRegion(current.profile) }
+            choices: azureUtil.getRegions(),
+          }, //, default: current => getDefaultRegion(current.profile) }
         ];
         break;
 
@@ -202,14 +202,14 @@ module.exports = async argv => {
           {
             type: "input",
             name: "projectId",
-            message: "Google Cloud Project Id:"
+            message: "Google Cloud Project Id:",
           },
           {
             type: "list",
             name: "location",
             message: "Location:",
-            choices: gcpUtil.getRegions()
-          } //, default: current => getDefaultRegion(current.profile) }
+            choices: gcpUtil.getRegions(),
+          }, //, default: current => getDefaultRegion(current.profile) }
         ];
         break;
     }
@@ -231,23 +231,26 @@ module.exports = async argv => {
 
   let deployResult;
 
-  if (doBootstrap) {
-    switch (initialisedConfig.platform) {
-      case "aws":
-        // await igniteAws(config, resume, status ? status.awsAnswers : null);
-        deployResult = await awsBootstrap.ignite(initialisedConfig, resume);
-        break;
-      case "azure":
-        deployResult = await azureBootstrap.ignite(initialisedConfig);
-        break;
-      case "gcp":
-        deployResult = await gcpBootstrap.ignite(initialisedConfig);
-        break;
-      default:
-        throw new Error(
-          `platform ${config.platform} is not currently supported`
-        );
-    }
+  switch (initialisedConfig.platform) {
+    case "aws":
+      // await igniteAws(config, resume, status ? status.awsAnswers : null);
+      deployResult = await awsBootstrap.ignite(
+        initialisedConfig,
+        resume,
+        doBootstrap
+      );
+      break;
+    case "azure":
+      deployResult = await azureBootstrap.ignite(
+        initialisedConfig,
+        doBootstrap
+      );
+      break;
+    case "gcp":
+      deployResult = await gcpBootstrap.ignite(initialisedConfig, doBootstrap);
+      break;
+    default:
+      throw new Error(`platform ${config.platform} is not currently supported`);
   }
 
   completeIgnite(
@@ -329,7 +332,7 @@ async function initialiseIgnite(config) {
     apiKey,
     bootstrapBucket,
     artifactBucket,
-    functionsDir
+    functionsDir,
   };
 }
 
@@ -356,7 +359,7 @@ function completeIgnite(name, generatedConfig) {
 
   igniteUtil.saveIgniteStatus({
     state: "complete",
-    generatedConfig
+    generatedConfig,
   });
 
   console.log(
