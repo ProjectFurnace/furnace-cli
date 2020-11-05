@@ -50,6 +50,7 @@
     "ms-rest-azure": "^3.0.0",
     "ora": "^4.0.3",
     "randomstring": "^1.1.5",
+    "run-container": "^1.2.1",
     "smoketail": "^0.2.2",
     "superagent": "^5.2.2",
     "which": "^2.0.2",

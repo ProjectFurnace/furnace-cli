@@ -295,7 +295,7 @@ module.exports = async (argv) => {
       spinner.start();
 
       const updateResult = await execSilentProcess(
-        `pulumi --non-interactive up --skip-preview`
+        `pulumi --yes --non-interactive up --skip-preview`
       );
 
       spinner.succeed("deployment successful");

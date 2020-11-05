@@ -7,7 +7,7 @@ const workspace = require("../utils/workspace"),
   yaml = require("yamljs"),
   githubUtil = require("../utils/github");
 
-module.exports = async directory => {
+module.exports = async (directory) => {
   const currentDir = directory
     ? path.join(process.cwd(), directory)
     : process.cwd();
@@ -39,69 +39,69 @@ module.exports = async directory => {
       name: "template",
       message: "Template:",
       default: "starter-template",
-      when: useTemplate
+      when: useTemplate,
     },
     {
       type: "input",
       name: "remoteUrl",
       message: "Stack Remote Git URL:",
       default: "",
-      when: !isGitHub
+      when: !isGitHub,
     },
     {
       type: "input",
       name: "stateRemoteUrl",
       message: "State Remote Git URL:",
       default: getStateRemoteGitUrl,
-      when: !isGitHub
+      when: !isGitHub,
     },
     {
       type: "input",
       name: "stackName",
       message: "Stack Name:",
       default: defaultStackName,
-      validate: input =>
-        input.includes("-") ? "stack name cannot contain dashes" : true
+      validate: (input) =>
+        input.includes("-") ? "stack name cannot contain dashes" : true,
     },
     {
       type: "list",
       name: "org",
       message: "GitHub Org:",
       choices: orgList,
-      when: isGitHub && hasGitToken
+      when: isGitHub && hasGitToken,
     },
     {
       type: "input",
       name: "repo",
       message: "GitHub Repository:",
-      default: current => current.stackName,
-      when: isGitHub && hasGitToken
+      default: (current) => current.stackName,
+      when: isGitHub && hasGitToken,
     },
     {
       type: "input",
       name: "stateRepo",
       message: "Repository:",
-      default: current => current.repo + "-state",
-      when: isGitHub && hasGitToken
+      default: (current) => current.repo + "-state",
+      when: isGitHub && hasGitToken,
     },
     {
       type: "confirm",
       name: "createRepos",
       message: "Create GitHub Repositories?",
-      when: isGitHub && hasGitToken
+      when: isGitHub && hasGitToken,
     },
     {
       type: "confirm",
       name: "privateRepo",
       message: "Private Repository?",
-      when: current => current.createRepos
+      when: (current) => current.createRepos,
     },
     {
       type: "confirm",
       name: "createHook",
       message: "Create GitHub Webhook",
-      when: current => isGitHub && current.createRepos && hasGitToken
-    }
+      when: (current) => isGitHub && current.createRepos && hasGitToken,
+    },
     //{ type: 'password', name: 'hookSecret', message: "Webhook Secret:", when: current => current.createHook },
   ];
 
@@ -116,7 +116,7 @@ module.exports = async directory => {
     createHook,
     org,
     repo,
-    stateRepo
+    stateRepo,
   } = answers;
 
   if (isGitHub) {
@@ -162,9 +162,12 @@ module.exports = async directory => {
   await gitutils.init(currentDir);
 
   git = require("simple-git/promise")(currentDir);
+
+  // if (org && repo) {
+
   await git.addRemote("origin", remoteUrl);
 
-  if (createRepos) {
+  if (createRepos && org && repo) {
     const currentRepo = await githubUtil.getRepository(
       currentConfig.gitToken,
       remoteUrl
