@@ -135,7 +135,8 @@ module.exports = async (argv) => {
           type: "confirm",
           name: "storeGitHubToken",
           message: "Store GitHub Token",
-        }, //, when: current => current.gitProvider === "github" }
+          when: (current) => current.gitToken.length > 0,
+        },
       ];
 
       config = await inquirer.prompt(questions);

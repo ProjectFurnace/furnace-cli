@@ -120,6 +120,7 @@ function createComponent(name, componentType, options) {
         case "timer":
         case "restapi":
         case "stream":
+        case "queue":
           const template = require(`../templates/components/${componentType}.${type}.json`);
           template.type = getRealComponentType(type);
           definition = { template };
@@ -223,6 +224,8 @@ function getRealComponentType(type) {
       return "Stream";
     case "restapi":
       return "RestApi";
+    case "queue":
+      return "Queue";
     default:
       return type;
   }

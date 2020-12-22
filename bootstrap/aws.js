@@ -17,7 +17,7 @@ module.exports.ignite = async (config, resume, doBootstrap) => {
 
     const artifactBucketExists = await s3utils.bucketExists(artifactBucket);
     if (!artifactBucketExists) {
-      console.log("creating artifact bucket...");
+      console.log(`creating artifact bucket ${artifactBucket}...`);
       await s3utils.createBucket(artifactBucket, config.location);
     }
 
