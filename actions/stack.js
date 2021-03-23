@@ -58,10 +58,20 @@ function stateToColour(state) {
 }
 
 module.exports.updateWebhook = async () => {
-  await github.updateHook();
+  const config = await workspace.getConfig();
+  const currentConfig = config[config.current];
+  const remoteUrl = await workspace.getRemoteUrl();
+
+  github.createRepoHook(
+    currentConfig.gitToken,
+    remoteUrl,
+    currentConfig.apiUrl + "/hook",
+    currentConfig.gitHookSecret
+  );
+  console.log(`created repository hook`);
 };
 
-module.exports.describe = async argv => {
+module.exports.describe = async (argv) => {
   const aws = require("../utils/aws").getInstance();
 
   const components = [];
@@ -137,7 +147,7 @@ module.exports.describe = async argv => {
   }
 
   const table = new Table({
-    head: ["Element", "Type", "Name", "Parent", "Resource", "Status"]
+    head: ["Element", "Type", "Name", "Parent", "Resource", "Status"],
   });
 
   for (let component of components) {
@@ -166,11 +176,11 @@ function processElements(
           parent = obj.source;
           break;
         case "Pipeline":
-          const pp = pipes.filter(p => p.pipeline === obj.name && p.tap);
+          const pp = pipes.filter((p) => p.pipeline === obj.name && p.tap);
           if (pp.length === 1) parent = pp[0].tap;
           break;
         case "Sink":
-          const ps = pipes.filter(p => p.sink === obj.name && p.pipeline);
+          const ps = pipes.filter((p) => p.sink === obj.name && p.pipeline);
           if (ps.length === 1) parent = ps[0].pipeline;
           break;
       }
@@ -186,7 +196,7 @@ function processElements(
   }
 }
 
-module.exports.dump = argv => {
+module.exports.dump = (argv) => {
   const stackProcessor = require("@project-furnace/stack-processor");
 
   const workspaceDir = workspace.getWorkspaceDir(),
@@ -196,7 +206,7 @@ module.exports.dump = argv => {
 
   if (argv._.length === 3) {
     // find specific flow
-    const flow = flows.find(r => r.name === argv._[2]);
+    const flow = flows.find((r) => r.name === argv._[2]);
     if (!flow) console.log("not found");
     else {
       console.log(util.inspect(flow, { depth: null, colors: true }));
@@ -206,7 +216,7 @@ module.exports.dump = argv => {
   }
 };
 
-module.exports.destroy = argv => {
+module.exports.destroy = (argv) => {
   const execProcess = (cmd, throwError = true) => {
     return new Promise((resolve, reject) => {
       const child = spawn(cmd, {
@@ -222,8 +232,8 @@ module.exports.destroy = argv => {
           AWS_ACCESS_KEY_ID: credentials.aws_access_key_id,
           AWS_SECRET_ACCESS_KEY: credentials.aws_secret_access_key,
           BUILD_BUCKET: context.artifactBucket,
-          FURNACE_INSTANCE: context.name
-        }
+          FURNACE_INSTANCE: context.name,
+        },
       });
     });
   };

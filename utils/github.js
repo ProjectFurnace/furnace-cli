@@ -2,11 +2,11 @@ const { Octokit } = require("@octokit/rest");
 
 let octokit;
 
-module.exports.authenticateWithToken = token => {
+module.exports.authenticateWithToken = (token) => {
   auth(token);
 };
 
-getOwnerRepoFromUrl = url => {
+getOwnerRepoFromUrl = (url) => {
   const repoParts = url.split("/");
   const repo = repoParts.pop().replace(".git", "");
   const owner = repoParts.pop();
@@ -15,12 +15,12 @@ getOwnerRepoFromUrl = url => {
 };
 
 //TODO: Refactor this. It's far from elegant but Octokit was working in quite a different way before and this is a quick fix
-auth = token => {
+auth = (token) => {
   if (token) {
     octokit = new Octokit({
       userAgent: "FurnaceCLI v1.0.6",
       previews: ["machine-man-preview"],
-      auth: "token " + token
+      auth: "token " + token,
     });
   } else {
     octokit = new Octokit();
@@ -34,7 +34,7 @@ module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     url,
     content_type: "json",
     secret,
-    insecure_ssl: 0
+    insecure_ssl: 0,
   };
 
   const { owner, repo } = getOwnerRepoFromUrl(repoUrl);
@@ -43,8 +43,9 @@ module.exports.createRepoHook = async (token, repoUrl, url, secret) => {
     events = ["push", "deployment"],
     active = true;
   const hook = { owner, repo, name, config, events, active };
+  // octokit = new Octokit();
 
-  const result = await octokit.repos.createHook(hook);
+  const result = await octokit.repos.createWebhook(hook);
   if (result.status !== 201) {
     throw new Error(`unable to create hook`);
   }
@@ -95,7 +96,7 @@ module.exports.listDeployments = async (token, url, environment) => {
     owner,
     repo,
     per_page,
-    environment
+    environment,
   });
   return result.data;
 };
@@ -114,7 +115,7 @@ module.exports.getDeploymentStatus = async (
     owner,
     repo,
     deployment_id,
-    status_id
+    status_id,
   });
   return result.data;
 };
@@ -129,23 +130,21 @@ module.exports.listDeploymentStatuses = async (token, url, deployment_id) => {
     owner,
     repo,
     deployment_id,
-    state_id
+    state_id,
   });
   return result.data;
 };
 
-module.exports.getOrgs = async token => {
+module.exports.getOrgs = async (token) => {
   auth(token);
 
   const result = await octokit.orgs.listForAuthenticatedUser();
-  return result.data.map(item => item.login);
+  return result.data.map((item) => item.login);
 };
 
-module.exports.getAuthenticatedUser = async token => {
+module.exports.getAuthenticatedUser = async (token) => {
   auth(token);
 
   const result = await octokit.users.getAuthenticated({});
   return result.data;
 };
-
-module.exports.updateHook = async token => {};

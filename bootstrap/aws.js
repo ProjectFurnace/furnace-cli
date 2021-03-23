@@ -15,6 +15,9 @@ module.exports.ignite = async (config, resume, doBootstrap) => {
   if (!doBootstrap) {
     const { artifactBucket } = config;
 
+    // TODO: ensure correct profile is used
+    process.ENV.AWS_PROFILE = config.profile;
+
     const artifactBucketExists = await s3utils.bucketExists(artifactBucket);
     if (!artifactBucketExists) {
       console.log(`creating artifact bucket ${artifactBucket}...`);
