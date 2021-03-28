@@ -21,6 +21,14 @@ module.exports.tap = async (stackPath, name, source) => {
   return process(stackPath, name, "tap", { source });
 };
 
+module.exports.function = async (stackPath, name, source) => {
+  if (!name || !source) {
+    return { code: 1, message: "name and source must be passed." };
+  }
+
+  return process(stackPath, name, "function", { source });
+};
+
 module.exports.pipeline = async (stackPath, name, functions) => {
   if (!name || !functions) {
     return { code: 1, message: "name and functions must be passed." };
@@ -131,11 +139,19 @@ function createComponent(name, componentType, options) {
       }
 
       break;
+    case "function":
+      // TODO: check source exists
+      definition = {
+        template: { source: options.source },
+        functions: [{ name, runtime: options.runtime || defaultRuntime }],
+      };
+
+      break;
     case "tap":
       const { source } = options;
       // TODO: check source exists
       definition = {
-        template: { source },
+        template: { source: options.source },
         functions: [{ name, runtime: options.runtime || defaultRuntime }],
       };
 
@@ -199,6 +215,8 @@ function getListName(componentType) {
   switch (componentType) {
     case "source":
       return "sources";
+    case "function":
+      return "functions";
     case "tap":
       return "taps";
     case "pipeline":

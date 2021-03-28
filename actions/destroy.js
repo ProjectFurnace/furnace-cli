@@ -13,6 +13,7 @@ module.exports = async () => {
     redshift = new aws.Redshift(),
     firehose = new aws.Firehose(),
     iam = new aws.IAM();
+  dynamodb = new aws.DynamoDB();
   let functionsToDelete = [];
   const functionList = await lambda.listFunctions().promise();
 
@@ -25,7 +26,7 @@ module.exports = async () => {
     console.log(`deleting function ${fn}`);
     const deleteResult = await lambda
       .deleteFunction({
-        FunctionName: fn
+        FunctionName: fn,
       })
       .promise();
   }
@@ -42,7 +43,7 @@ module.exports = async () => {
     const deleteResult = await kinesis
       .deleteStream({
         StreamName: stream,
-        EnforceConsumerDeletion: true
+        EnforceConsumerDeletion: true,
       })
       .promise();
   }
@@ -59,7 +60,7 @@ module.exports = async () => {
     console.log(`deleting mapping ${mapping}`);
     const deleteResult = await lambda
       .deleteEventSourceMapping({
-        UUID: mapping
+        UUID: mapping,
       })
       .promise();
   }
@@ -87,7 +88,7 @@ module.exports = async () => {
     const deleteResult = await iam
       .deleteRolePolicy({
         PolicyName: policy[0],
-        RoleName: policy[1]
+        RoleName: policy[1],
       })
       .promise();
   }
@@ -96,7 +97,7 @@ module.exports = async () => {
     console.log(`deleting role ${role}`);
     const deleteResult = await iam
       .deleteRole({
-        RoleName: role
+        RoleName: role,
       })
       .promise();
   }
@@ -113,7 +114,7 @@ module.exports = async () => {
     console.log(`deleting elasticsearch ${domain}`);
     const deleteResult = await elastic
       .deleteElasticsearchDomain({
-        DomainName: domain
+        DomainName: domain,
       })
       .promise();
   }
@@ -131,7 +132,7 @@ module.exports = async () => {
     const deleteResult = await redshift
       .deleteCluster({
         ClusterIdentifier: cluster,
-        SkipFinalClusterSnapshot: true
+        SkipFinalClusterSnapshot: true,
       })
       .promise();
   }
@@ -147,7 +148,23 @@ module.exports = async () => {
     console.log(`deleting firehose ${streamName}`);
     const deleteResult = await firehose
       .deleteDeliveryStream({
-        DeliveryStreamName: streamName
+        DeliveryStreamName: streamName,
+      })
+      .promise();
+  }
+
+  let dynamoTablesToDelete = [];
+  const tablesList = await dynamodb.listTables().promise();
+
+  for (let table of tablesList.TableNames) {
+    if (table.startsWith(stackName)) dynamoTablesToDelete.push(table);
+  }
+
+  for (let tableName of dynamoTablesToDelete) {
+    console.log(`deleting dynamodb table ${tableName}`);
+    const deleteResult = await dynamodb
+      .deleteTable({
+        TableName: tableName,
       })
       .promise();
   }
