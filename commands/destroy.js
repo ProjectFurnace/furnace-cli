@@ -4,5 +4,5 @@ exports.command = "destroy <env>";
 exports.desc = "Destroy Furnace stack";
 exports.builder = {};
 exports.handler = async (argv) => {
-  await destroy_actions();
+  await destroy_actions(argv.env);
 };

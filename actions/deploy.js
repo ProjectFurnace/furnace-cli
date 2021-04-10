@@ -174,6 +174,8 @@ module.exports = async (argv) => {
     //   output: false
     // });
     await execSilentProcess(`pulumi --non-interactive stack init ${stackName}`);
+  } else {
+    await execSilentProcess(`pulumi stack select ${stackName}`);
   }
 
   switch (context.platform) {

@@ -1,24 +1,28 @@
 const stack = require("../utils/stack"),
   AWS = require("../utils/aws").getInstance;
-module.exports = async () => {
+
+module.exports = async (env) => {
   const aws = AWS();
 
   const currentStack = stack.getConfig("stack"),
     stackName = currentStack.name;
-  console.log(`current stack is ${stackName}`);
+
+  console.log(`current stack is ${stackName} env ${env}`);
 
   const lambda = new aws.Lambda(),
     kinesis = new aws.Kinesis(),
     elastic = new aws.ES(),
     redshift = new aws.Redshift(),
     firehose = new aws.Firehose(),
-    iam = new aws.IAM();
-  dynamodb = new aws.DynamoDB();
+    iam = new aws.IAM(),
+    dynamodb = new aws.DynamoDB(),
+    sqs = new aws.SQS();
+
   let functionsToDelete = [];
   const functionList = await lambda.listFunctions().promise();
 
   for (let fn of functionList.Functions) {
-    if (fn.FunctionName.startsWith(stackName))
+    if (fn.FunctionName.startsWith(stackName) && fn.FunctionName.endsWith(env))
       functionsToDelete.push(fn.FunctionName);
   }
 
@@ -35,7 +39,8 @@ module.exports = async () => {
   const streamList = await kinesis.listStreams().promise();
 
   for (let stream of streamList.StreamNames) {
-    if (stream.startsWith(stackName)) streamsToDelete.push(stream);
+    if (stream.startsWith(stackName) && stream.endsWith(env))
+      streamsToDelete.push(stream);
   }
 
   for (let stream of streamsToDelete) {
@@ -53,7 +58,8 @@ module.exports = async () => {
 
   for (let mapping of mappingList.EventSourceMappings) {
     const fnName = mapping.FunctionArn.split(":").pop();
-    if (fnName.startsWith(stackName)) mappingsToDelete.push(mapping.UUID);
+    if (fnName.startsWith(stackName) && fnName.endsWith(env))
+      mappingsToDelete.push(mapping.UUID);
   }
 
   for (let mapping of mappingsToDelete) {
@@ -70,7 +76,7 @@ module.exports = async () => {
   const rolesList = await iam.listRoles({ MaxItems: 200 }).promise();
 
   for (let role of rolesList.Roles) {
-    if (role.RoleName.startsWith(stackName)) {
+    if (role.RoleName.startsWith(stackName) && role.RoleName.endsWith(env)) {
       rolesToDelete.push(role.RoleName);
 
       const policiesList = await iam
@@ -106,7 +112,10 @@ module.exports = async () => {
   const elasticList = await elastic.listDomainNames().promise();
 
   for (let domain of elasticList.DomainNames) {
-    if (domain.DomainName.startsWith(stackName))
+    if (
+      domain.DomainName.startsWith(stackName) &&
+      domain.DomainName.endsWith(env)
+    )
       elasticsToDelete.push(domain.DomainName);
   }
 
@@ -123,7 +132,10 @@ module.exports = async () => {
   const redshiftList = await redshift.describeClusters().promise();
 
   for (let cluster of redshiftList.Clusters) {
-    if (cluster.ClusterIdentifier.startsWith(stackName))
+    if (
+      cluster.ClusterIdentifier.startsWith(stackName) &&
+      cluster.ClusterIdentifier.endsWith(env)
+    )
       redshiftsToDelete.push(cluster.ClusterIdentifier);
   }
 
@@ -141,7 +153,8 @@ module.exports = async () => {
   const firehoseList = await firehose.listDeliveryStreams().promise();
 
   for (let stream of firehoseList.DeliveryStreamNames) {
-    if (stream.startsWith(stackName)) firehosesToDelete.push(stream);
+    if (stream.startsWith(stackName) && stream.endsWith(env))
+      firehosesToDelete.push(stream);
   }
 
   for (let streamName of firehosesToDelete) {
@@ -157,7 +170,8 @@ module.exports = async () => {
   const tablesList = await dynamodb.listTables().promise();
 
   for (let table of tablesList.TableNames) {
-    if (table.startsWith(stackName)) dynamoTablesToDelete.push(table);
+    if (table.startsWith(stackName) && table.endsWith(env))
+      dynamoTablesToDelete.push(table);
   }
 
   for (let tableName of dynamoTablesToDelete) {
@@ -167,5 +181,18 @@ module.exports = async () => {
         TableName: tableName,
       })
       .promise();
+  }
+
+  let queuesToDelete = [];
+  const queuesList = await sqs.listQueues().promise();
+
+  for (let queue of queuesList.QueueUrls) {
+    if (queue.includes(`${stackName}-`) && queue.includes(`-${env}`))
+      queuesToDelete.push(queue);
+  }
+
+  for (let queue of queuesToDelete) {
+    console.log(`deleting sqs queue ${queue}`);
+    const deleteResult = await sqs.deleteQueue({ QueueUrl: queue }).promise();
   }
 };
